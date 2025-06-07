@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS submissions (
     task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
     submitted_data_url TEXT,
     timestamp TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    verification_result VARCHAR(50) CHECK (verification_result IN ('rejected', 'approved', 'reverify'))
+    verification_result VARCHAR(50) CHECK (verification_result IN ('true', 'false'))
 );
 """
 

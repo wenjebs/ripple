@@ -14,9 +14,9 @@ class TaskVerifiedEnum(str, Enum):
     FALSE = "false"
 
 class SubmissionVerificationResultEnum(str, Enum):
-    REJECTED = "rejected"
-    APPROVED = "approved"
-    REVERIFY = "reverify"
+    TRUE = "true"
+    FALSE = "false"
+
 
 class ExpectedDataTypeEnum(str, Enum):
     IMAGE = "image"
