@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import {
   Search,
   Filter,
@@ -13,10 +14,87 @@ import {
   Clock,
   FolderOpen,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Target,
 } from "lucide-react"
 import TaskCard from "@/components/task-card"
 import AddTaskModal from "@/components/add-task-modal"
 import type { Task } from "@/types/task"
+
+// Fake hook for goal data management - TODO: Replace with actual API integration
+const useGoalData = () => {
+  const [goalData, setGoalData] = useState<{
+    goal: string
+    duration: number
+    difficulty: string
+  } | null>(null)
+  const [currentMonth, setCurrentMonth] = useState(1)
+  const [monthWeekProgress, setMonthWeekProgress] = useState<Record<number, number>>({})
+
+  const getCurrentWeek = () => {
+    return monthWeekProgress[currentMonth] || 1
+  }
+
+  const loadGoalData = () => {
+    // TODO: Replace with actual API call
+    try {
+      const stored = localStorage.getItem('userGoal')
+      if (stored) {
+        const data = JSON.parse(stored)
+        setGoalData(data)
+      }
+      // Load progress data
+      const progress = localStorage.getItem('userProgress')
+      if (progress) {
+        const { month, monthWeeks } = JSON.parse(progress)
+        setCurrentMonth(month || 1)
+        setMonthWeekProgress(monthWeeks || {})
+      }
+    } catch (error) {
+      console.error('Failed to load goal data:', error)
+    }
+  }
+
+  const updateMonth = (month: number) => {
+    setCurrentMonth(month)
+    // TODO: Save progress to backend
+    const progress = localStorage.getItem('userProgress')
+    const existingProgress = progress ? JSON.parse(progress) : {}
+    localStorage.setItem('userProgress', JSON.stringify({ 
+      ...existingProgress, 
+      month,
+      monthWeeks: monthWeekProgress
+    }))
+    console.log('Updated month to:', month)
+  }
+
+  const updateWeek = (week: number) => {
+    const newMonthWeekProgress = {
+      ...monthWeekProgress,
+      [currentMonth]: week
+    }
+    setMonthWeekProgress(newMonthWeekProgress)
+    // TODO: Save progress to backend
+    const progress = localStorage.getItem('userProgress')
+    const existingProgress = progress ? JSON.parse(progress) : {}
+    localStorage.setItem('userProgress', JSON.stringify({ 
+      ...existingProgress, 
+      month: currentMonth,
+      monthWeeks: newMonthWeekProgress
+    }))
+    console.log('Updated week to:', week, 'for month:', currentMonth)
+  }
+
+  return {
+    goalData,
+    currentMonth,
+    currentWeek: getCurrentWeek(),
+    loadGoalData,
+    updateMonth,
+    updateWeek,
+  }
+}
 
 const initialTasks: Task[] = [
   {
@@ -81,7 +159,26 @@ export default function TaskManager() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-  const [activeWeek, setActiveWeek] = useState(1)
+  const router = useRouter()
+  const { goalData, currentMonth, currentWeek, loadGoalData, updateMonth, updateWeek } = useGoalData()
+
+  // Load goal data on component mount
+  useEffect(() => {
+    loadGoalData()
+  }, [])
+
+  // Redirect to onboarding if no goal data
+  useEffect(() => {
+    if (goalData === null) {
+      // Give some time for localStorage to load before redirecting
+      const timer = setTimeout(() => {
+        if (goalData === null) {
+          router.push('/onboarding')
+        }
+      }, 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [goalData, router])
 
   const incompleteTasks = tasks.filter((task) => !task.completed)
   const completedTasks = tasks.filter((task) => task.completed)
@@ -109,6 +206,60 @@ export default function TaskManager() {
 
   const handleToggleTask = (taskId: string) => {
     setTasks(tasks.map((task) => (task.id === taskId ? { ...task, completed: !task.completed } : task)))
+  }
+
+  const handlePreviousMonth = () => {
+    if (currentMonth > 1) {
+      updateMonth(currentMonth - 1)
+    }
+  }
+
+  const handleNextMonth = () => {
+    if (goalData && currentMonth < goalData.duration) {
+      updateMonth(currentMonth + 1)
+    }
+  }
+
+  const handlePreviousWeek = () => {
+    if (currentWeek > 1) {
+      updateWeek(currentWeek - 1)
+    }
+  }
+
+  const handleNextWeek = () => {
+    if (currentWeek < 4) {
+      updateWeek(currentWeek + 1)
+    }
+  }
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'easy': return 'text-green-400'
+      case 'medium': return 'text-yellow-400'
+      case 'hard': return 'text-red-400'
+      default: return 'text-neutral-400'
+    }
+  }
+
+  const getDifficultyBadgeColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'easy': return 'bg-green-600/20 text-green-400'
+      case 'medium': return 'bg-yellow-600/20 text-yellow-400'
+      case 'hard': return 'bg-red-600/20 text-red-400'
+      default: return 'bg-neutral-600/20 text-neutral-400'
+    }
+  }
+
+  // Show loading state while checking for goal data
+  if (goalData === null) {
+    return (
+      <div className="bg-neutral-900 text-neutral-100 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-neutral-400">Loading your goals...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -152,23 +303,140 @@ export default function TaskManager() {
 
         {/* Goal Section */}
         <div className="mb-6">
-          <h2 className="text-2xl font-semibold text-neutral-100 mb-2">
-            My Goal: <span className="text-purple-400">Trying to get healthy</span>
-          </h2>
-          <div className="flex items-center space-x-2 p-1 bg-neutral-800 rounded-lg">
-            {[1, 2, 3, 4].map((week) => (
-              <button
-                key={week}
-                onClick={() => setActiveWeek(week)}
-                className={`px-4 py-2 text-sm font-medium rounded-md flex-1 text-center transition-colors ${
-                  activeWeek === week
-                    ? "text-neutral-100 bg-purple-600"
-                    : "text-neutral-400 hover:bg-neutral-700 hover:text-neutral-100"
-                }`}
-              >
-                Week {week}
-              </button>
-            ))}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <h2 className="text-2xl font-semibold text-neutral-100">
+                My Goal: <span className="text-purple-400">{goalData.goal}</span>
+              </h2>
+              <span className={`px-2 py-1 text-xs rounded-full font-medium ${getDifficultyBadgeColor(goalData.difficulty)}`}>
+                {goalData.difficulty.charAt(0).toUpperCase() + goalData.difficulty.slice(1)}
+              </span>
+            </div>
+            <div className="flex items-center space-x-2 text-sm text-neutral-400">
+              <Target className="w-4 h-4" />
+              <span>{goalData.duration} month{goalData.duration > 1 ? 's' : ''} goal</span>
+            </div>
+          </div>
+          
+                    {/* Progress Navigation */}
+          <div className="space-y-6">
+            {/* Centralized Progress Bars */}
+            <div className="flex items-center justify-center space-x-8">
+              {/* Month Progress */}
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={handlePreviousMonth}
+                  disabled={currentMonth <= 1}
+                  className={`p-2 rounded-md transition-colors ${
+                    currentMonth <= 1
+                      ? "text-neutral-600 cursor-not-allowed"
+                      : "text-neutral-400 hover:text-neutral-100 hover:bg-neutral-700"
+                  }`}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                
+                <div className="w-48">
+                  <div className="w-full bg-neutral-700 rounded-full h-4">
+                    <div
+                      className="bg-purple-600 h-4 rounded-full transition-all duration-300"
+                      style={{ width: `${(currentMonth / goalData.duration) * 100}%` }}
+                    />
+                  </div>
+                  <div className="text-xs text-neutral-500 text-center mt-2">Month Progress</div>
+                </div>
+                
+                <button
+                  onClick={handleNextMonth}
+                  disabled={currentMonth >= goalData.duration}
+                  className={`p-2 rounded-md transition-colors ${
+                    currentMonth >= goalData.duration
+                      ? "text-neutral-600 cursor-not-allowed"
+                      : "text-neutral-400 hover:text-neutral-100 hover:bg-neutral-700"
+                  }`}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Week Progress */}
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={handlePreviousWeek}
+                  disabled={currentWeek <= 1}
+                  className={`p-2 rounded-md transition-colors ${
+                    currentWeek <= 1
+                      ? "text-neutral-600 cursor-not-allowed"
+                      : "text-neutral-400 hover:text-neutral-100 hover:bg-neutral-700"
+                  }`}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                
+                <div className="w-48">
+                  <div className="w-full bg-neutral-700 rounded-full h-4">
+                    <div
+                      className="bg-green-500 h-4 rounded-full transition-all duration-300"
+                      style={{ width: `${(currentWeek / 4) * 100}%` }}
+                    />
+                  </div>
+                  <div className="text-xs text-neutral-500 text-center mt-2">Week Progress</div>
+                </div>
+                
+                <button
+                  onClick={handleNextWeek}
+                  disabled={currentWeek >= 4}
+                  className={`p-2 rounded-md transition-colors ${
+                    currentWeek >= 4
+                      ? "text-neutral-600 cursor-not-allowed"
+                      : "text-neutral-400 hover:text-neutral-100 hover:bg-neutral-700"
+                  }`}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Month Indicators */}
+            <div className="flex items-center space-x-2 justify-center flex-wrap">
+              {Array.from({ length: goalData.duration }, (_, index) => {
+                const month = index + 1
+                return (
+                  <button
+                    key={month}
+                    onClick={() => updateMonth(month)}
+                    className={`w-10 h-10 rounded-full text-xs font-medium transition-colors ${
+                      month === currentMonth
+                        ? "bg-purple-600 text-white"
+                        : month < currentMonth
+                        ? "bg-purple-400 text-white"
+                        : "bg-neutral-700 text-neutral-400 hover:bg-neutral-600"
+                    }`}
+                  >
+                    {month}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Week Indicators */}
+            <div className="flex items-center space-x-2 justify-center">
+              {[1, 2, 3, 4].map((week) => (
+                <button
+                  key={week}
+                  onClick={() => updateWeek(week)}
+                  className={`w-10 h-10 rounded-full text-xs font-medium transition-colors ${
+                    week === currentWeek
+                      ? "bg-green-600 text-white"
+                      : week < currentWeek
+                      ? "bg-green-400 text-white"
+                      : "bg-neutral-700 text-neutral-400 hover:bg-neutral-600"
+                  }`}
+                >
+                  {week}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -250,3 +518,5 @@ export default function TaskManager() {
     </div>
   )
 }
+
+
