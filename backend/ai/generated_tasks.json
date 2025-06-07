@@ -1,0 +1,46 @@
+{
+  "goal": "Get healthy in 1 month",
+  "duration_weeks": 2,
+  "weeks": [
+    {
+      "week": 1,
+      "tasks": [
+        {
+          "task": "Complete 3 cardio workouts of at least 30 minutes each.",
+          "requirement": "Screenshots from a fitness tracking app (e.g., Strava, Fitbit, Apple Health) showing 3 distinct workout sessions, each with a duration of at least 30 minutes.",
+          "requirement_modality": "image"
+        },
+        {
+          "task": "Prepare and consume 5 healthy, home-cooked meals (lunch or dinner).",
+          "requirement": "Photos of 5 distinct healthy, home-cooked meals.",
+          "requirement_modality": "image"
+        },
+        {
+          "task": "Track all food intake for 3 days using a food tracking app.",
+          "requirement": "Screenshots from a food tracking app (e.g., MyFitnessPal, Cronometer) showing daily nutritional summaries for 3 distinct days.",
+          "requirement_modality": "image"
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "tasks": [
+        {
+          "task": "Complete 4 cardio workouts of at least 35 minutes each.",
+          "requirement": "Screenshots from a fitness tracking app (e.g., Strava, Fitbit, Apple Health) showing 4 distinct workout sessions, each with a duration of at least 35 minutes.",
+          "requirement_modality": "image"
+        },
+        {
+          "task": "Prepare and consume 7 healthy, home-cooked meals (lunch or dinner).",
+          "requirement": "Photos of 7 distinct healthy, home-cooked meals.",
+          "requirement_modality": "image"
+        },
+        {
+          "task": "Complete 2 strength training sessions of at least 20 minutes each.",
+          "requirement": "Photos of yourself performing an exercise during each of the 2 sessions, clearly indicating the activity (e.g., dumbbells in hand, yoga mat).",
+          "requirement_modality": "image"
+        }
+      ]
+    }
+  ]
+}
