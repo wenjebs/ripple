@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
+import Image from "next/image"
 import { X, Upload, Camera, CheckCircle, FileText } from "lucide-react"
 import { toast } from "sonner"
 import type { Task } from "@/types/task"
@@ -167,8 +168,12 @@ export default function TaskSubmissionModal({
         
         // Keep modal open so user can see the encouraging feedback
       } else {
-        // Failed verification - show error and keep modal open
+        // Failed verification - show error and clear uploaded content
         setSubmitError(`Verification failed: ${result.verification_comments || 'Please check your submission and try again.'}`)
+        
+        // Clear uploaded files and text
+        setSelectedFiles([])
+        setTextSubmission("")
         
         // Show failure toast
         toast.error("Verification Failed", {
@@ -244,7 +249,7 @@ export default function TaskSubmissionModal({
           )}
 
           {/* Text Submission */}
-          {isTextTask && (
+          {isTextTask && !submitError && (
             <div className="mb-6">
               <label className="block text-sm font-medium text-neutral-300 mb-3">
                 Your Response
@@ -266,7 +271,7 @@ export default function TaskSubmissionModal({
           )}
 
           {/* Image Upload Area */}
-          {isImageTask && (
+          {isImageTask && !submitError && (
             <>
               <div
                 className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
@@ -312,9 +317,11 @@ export default function TaskSubmissionModal({
                     {selectedFiles.map((file, index) => (
                       <div key={index} className="relative group">
                         <div className="aspect-square bg-neutral-700 rounded-lg overflow-hidden">
-                          <img
+                          <Image
                             src={URL.createObjectURL(file)}
                             alt={`Preview ${index + 1}`}
+                            width={200}
+                            height={200}
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -364,9 +371,20 @@ export default function TaskSubmissionModal({
             >
               Cancel
             </button>
+            {submitError && (
+              <button
+                onClick={() => {
+                  setSubmitError(null)
+                  setSubmitSuccess(null)
+                }}
+                className="px-4 py-2 text-sm bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg transition-colors"
+              >
+                Try Again
+              </button>
+            )}
             <button
               onClick={handleSubmit}
-              disabled={!canSubmit() || isSubmitting}
+              disabled={!canSubmit() || isSubmitting || !!submitError}
               className="px-6 py-2 text-sm bg-purple-600 hover:bg-purple-700 disabled:bg-neutral-600 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors flex items-center space-x-2"
             >
               {isSubmitting ? (

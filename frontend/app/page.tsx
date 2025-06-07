@@ -6,7 +6,6 @@ import type { ComponentType } from "react"
 import { useAuth } from "@/hooks/useAuth"
 import {
   Search,
-  Plus,
   Settings,
   User,
   MoreHorizontal,
@@ -427,13 +426,13 @@ export default function TaskManager() {
                 <Coins className="w-4 h-4" />
                 <span>Stake XRP</span>
               </button>
-              <button
+              {/* <button
                 onClick={() => setIsModalOpen(true)}
                 className="px-4 py-2 text-sm bg-purple-600 rounded-md hover:bg-purple-700 text-white flex items-center space-x-1 font-medium transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Task</span>
-              </button>
+              </button> */}
               <button className="p-3 rounded-lg hover:bg-neutral-700 text-neutral-400 hover:text-purple-600 transition-colors">
                 <Settings className="w-6 h-6" />
               </button>
