@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, File, Form, UploadFile
+from fastapi import APIRouter, HTTPException, File, Form, UploadFile
 from uuid import UUID
 import os
 from supabase import create_client, Client
@@ -7,7 +7,7 @@ from typing import Optional, List, Literal # Added List, Literal
 import json # Added json
 
 from models import (
-    Submission, SubmissionCreateRequest, SubmissionCreate,
+    Submission, SubmissionCreate,
     TaskVerifiedEnum, SubmissionVerificationResultEnum, GoalStatusEnum
 )
 from ai.ai import submit_task as ai_verify_submission_content # Import the AI function

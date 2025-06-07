@@ -10,4 +10,8 @@ export interface Task {
   completionStatus?: CompletionStatus
   dueDate?: string
   avatar: string
+  // Backend fields
+  verification_method?: string
+  expected_data_type?: 'image' | 'text'
+  verified?: 'true' | 'false'
 }

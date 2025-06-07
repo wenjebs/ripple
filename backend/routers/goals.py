@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from uuid import UUID
 import os
 from supabase import create_client, Client
@@ -116,12 +115,12 @@ async def create_goal(
                 # Rollback goal creation
                 # supabase.table("goals").delete().eq("id", str(goal_id)).execute()
                 raise HTTPException(status_code=500, detail=f"Could not store tasks: {tasks_response.error.message if tasks_response.error else 'Unknown error'}")
-            created_tasks_data = tasks_response.data
+            # created_tasks_data = tasks_response.data
         except Exception as e:
             # supabase.table("goals").delete().eq("id", str(goal_id)).execute()
             raise HTTPException(status_code=500, detail=f"Error storing tasks in DB: {str(e)}")
     else:
-        created_tasks_data = []
+        pass
 
     # 4. Prepare and return the response
     # Fetch the created goal again to include its ID and default fields
