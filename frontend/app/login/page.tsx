@@ -11,7 +11,8 @@ export default function LoginPage() {
   const { login } = useAuth()
   const router = useRouter()
 
-  const handleWalletConnect = async (method: 'xumm' | 'browser') => {
+  const handleWalletConnect = async (provider: string) => {
+    console.log('handleWalletConnect', provider)
     setIsConnecting(true)
     setError(null)
 
@@ -37,7 +38,7 @@ export default function LoginPage() {
 
     try {
       // For demo purposes, use a test wallet address
-      const success = await login('rDemoWalletAddressForTesting12345')
+      const success = await login()
       
       if (success) {
         router.push('/')
