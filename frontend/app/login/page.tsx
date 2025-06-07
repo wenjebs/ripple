@@ -2,46 +2,28 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Wallet, Shield, Eye, EyeOff, ArrowRight, CheckCircle2 } from "lucide-react"
-
-const SUPPORTED_WALLETS = [
-  {
-    id: "xumm",
-    name: "XUMM",
-    description: "The most popular XRP Ledger wallet",
-    icon: "🔷",
-    status: "recommended"
-  },
-  {
-    id: "crossmark",
-    name: "Crossmark",
-    description: "Multi-chain wallet with XRP support",
-    icon: "✖️",
-    status: "available"
-  },
-  {
-    id: "gem",
-    name: "GEM Wallet",
-    description: "Multi-currency wallet for XRPL",
-    icon: "💎",
-    status: "available"
-  }
-]
+import { Wallet, Shield, Eye, EyeOff, ArrowRight } from "lucide-react"
 
 export default function LoginPage() {
-  const [selectedWallet, setSelectedWallet] = useState<string | null>(null)
+  const [walletId, setWalletId] = useState("")
   const [isConnecting, setIsConnecting] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const router = useRouter()
 
-  const handleWalletConnect = async (walletId: string) => {
-    setSelectedWallet(walletId)
+  const handleWalletConnect = async () => {
+    if (!walletId.trim()) {
+      return
+    }
+    
     setIsConnecting(true)
+    
+    // Store wallet ID in localStorage
+    localStorage.setItem('walletId', walletId.trim())
     
     // Simulate wallet connection process
     setTimeout(() => {
       setIsConnecting(false)
-      // Redirect to onboarding page
+      // Redirect to main dashboard
       router.push('/onboarding')
     }, 500)
   }
@@ -58,54 +40,49 @@ export default function LoginPage() {
             Connect Your Wallet
           </h1>
           <p className="text-neutral-400 text-sm">
-            Sign in securely with your XRP Ledger wallet to access Task Manager
+            Enter your XRP Ledger wallet ID to access Task Manager
           </p>
         </div>
 
-        {/* Wallet Options */}
-        <div className="space-y-3 mb-6">
-          {SUPPORTED_WALLETS.map((wallet) => (
-            <button
-              key={wallet.id}
-              onClick={() => handleWalletConnect(wallet.id)}
-              disabled={isConnecting}
-              className={`w-full p-4 rounded-lg border transition-all duration-200 ${
-                selectedWallet === wallet.id
-                  ? "border-purple-600 bg-purple-600/10"
-                  : "border-neutral-700 bg-neutral-800 hover:border-neutral-600 hover:bg-neutral-750"
-              } ${isConnecting ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="text-2xl">{wallet.icon}</div>
-                  <div className="text-left">
-                    <div className="flex items-center space-x-2">
-                      <h3 className="font-medium text-neutral-100">{wallet.name}</h3>
-                      {wallet.status === "recommended" && (
-                        <span className="px-2 py-0.5 text-xs bg-purple-600/20 text-purple-400 rounded-full">
-                          Recommended
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-neutral-400">{wallet.description}</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  {selectedWallet === wallet.id && isConnecting ? (
-                    <div className="w-5 h-5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
-                  ) : selectedWallet === wallet.id ? (
-                    <CheckCircle2 className="w-5 h-5 text-purple-600" />
-                  ) : (
-                    <ArrowRight className="w-5 h-5 text-neutral-500" />
-                  )}
-                </div>
-              </div>
-            </button>
-          ))}
+        {/* Wallet ID Input */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-neutral-300 mb-2">
+            Wallet ID
+          </label>
+          <input
+            type="text"
+            value={walletId}
+            onChange={(e) => setWalletId(e.target.value)}
+            placeholder="Enter your wallet ID (e.g., rN7n7otQDd6FczFgLdSqtcsAUxDkw6fzRH)"
+            className="w-full bg-neutral-800 border border-neutral-700 rounded-md px-3 py-3 text-neutral-100 focus:ring-1 focus:ring-purple-600 focus:border-purple-600 outline-none placeholder-neutral-500"
+          />
         </div>
 
+        {/* Connect Button */}
+        <button
+          onClick={handleWalletConnect}
+          disabled={isConnecting || !walletId.trim()}
+          className={`w-full p-3 rounded-lg border transition-all duration-200 flex items-center justify-center space-x-2 ${
+            isConnecting || !walletId.trim()
+              ? "border-neutral-700 bg-neutral-800 opacity-50 cursor-not-allowed"
+              : "border-purple-600 bg-purple-600 hover:bg-purple-700 cursor-pointer"
+          }`}
+        >
+          {isConnecting ? (
+            <>
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <span className="text-white font-medium">Connecting...</span>
+            </>
+          ) : (
+            <>
+              <span className="text-white font-medium">Connect Wallet</span>
+              <ArrowRight className="w-5 h-5 text-white" />
+            </>
+          )}
+        </button>
+
         {/* Advanced Options */}
-        <div className="mb-6">
+        <div className="mb-6 mt-6">
           <button
             onClick={() => setShowAdvanced(!showAdvanced)}
             className="flex items-center space-x-2 text-sm text-neutral-400 hover:text-neutral-100 transition-colors"
