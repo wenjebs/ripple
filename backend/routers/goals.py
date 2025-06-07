@@ -1,14 +1,13 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException
 from uuid import UUID
-from typing import List, Dict, Any
 import os
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
+from ai.ai import create_tasks as ai_create_tasks # Import the AI function
 from models import (
-    Goal, GoalCreateRequest, GoalCreate, GoalStatusResponse,
-    Task, TaskCreate,
-    GoalStatusEnum, TaskVerifiedEnum, SubmissionVerificationResultEnum
+    GoalCreateRequest, GoalCreate, GoalStatusResponse,
+    Task, TaskCreate
 )
 
 load_dotenv()
@@ -21,19 +20,6 @@ if not SUPABASE_URL or not SUPABASE_KEY:
     raise RuntimeError("SUPABASE_URL and SUPABASE_KEY must be set in .env file")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-# AI Service (Placeholder)
-async def generate_tasks_for_goal(goal_title: str, duration_weeks: int) -> List[Dict[str, Any]]:
-    # Placeholder: Replace with actual call to OpenAI API or other AI service
-    tasks = []
-    for week in range(1, duration_weeks + 1):
-        tasks.append({
-            "week_number": week,
-            "title": f"AI Generated Task for '{goal_title}' - Week {week}",
-            "verification_method": "AI Verification",
-            "expected_data_type": "text"
-        })
-    return tasks
 
 router = APIRouter(
     prefix="/goals",
@@ -87,7 +73,14 @@ async def create_goal(
 
     # 2. Generate tasks for the goal (using AI placeholder)
     try:
-        ai_generated_tasks = await generate_tasks_for_goal(goal_data.title, goal_data.duration_weeks)
+        # Call the actual AI service function
+        ai_response = await ai_create_tasks(goal=goal_data.title, duration_weeks=goal_data.duration_weeks)
+        if not ai_response or "weeks" not in ai_response:
+            raise HTTPException(status_code=500, detail="AI service returned an invalid response.")
+        
+        # Process the AI response
+        ai_generated_tasks_structured = ai_response.get("weeks", [])
+
     except Exception as e:
         # Rollback goal creation or mark as needing task generation?
         # For now, just raise error. Consider cleanup logic for production.
@@ -96,15 +89,21 @@ async def create_goal(
 
     # 3. Store generated tasks in the database
     tasks_to_insert = []
-    for task_data in ai_generated_tasks:
-        task_create = TaskCreate(
-            goal_id=goal_id,
-            week_number=task_data["week_number"],
-            title=task_data["title"],
-            verification_method=task_data["verification_method"],
-            expected_data_type=task_data["expected_data_type"]
-        )
-        tasks_to_insert.append(task_create.model_dump(mode='json'))
+    for week_data in ai_generated_tasks_structured: # Iterate through weeks
+        current_week_number = week_data.get("week")
+        if current_week_number is None:
+            # Handle cases where week number might be missing, though schema requires it
+            print(f"Warning: Skipping week data due to missing 'week' number: {week_data}")
+            continue
+        for task_item in week_data.get("tasks", []): # Iterate through tasks in a week
+            task_create = TaskCreate(
+                goal_id=goal_id,
+                week_number=current_week_number,
+                title=task_item.get("task"), # Map from 'task'
+                verification_method=task_item.get("requirement"), # Map from 'requirement'
+                expected_data_type=task_item.get("requirement_modality") # Map from 'requirement_modality'
+            )
+            tasks_to_insert.append(task_create.model_dump(mode='json'))
 
     if tasks_to_insert:
         try:
