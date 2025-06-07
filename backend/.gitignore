@@ -44,3 +44,6 @@ temp/
 .temp/
 
 venv/
+
+__pycache__/
+*.pyc
