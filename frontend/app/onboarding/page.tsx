@@ -48,10 +48,47 @@ const useGoalStorage = () => {
     goal: string
     duration: number
     difficulty: string
+    xrpAmount: number
   }) => {
-    // TODO: Replace with actual API call
-    console.log('Saving goal:', goalData)
-    localStorage.setItem('userGoal', JSON.stringify(goalData))
+    try {
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem('auth_token')
+      if (!authToken) {
+        throw new Error('Not authenticated')
+      }
+
+      const response = await fetch('/api/goals/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          title: goalData.goal,
+          duration_weeks: goalData.duration * 4, // Convert months to weeks
+          xrp_amount: goalData.xrpAmount
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.detail || `HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.json()
+      
+      // Store goal data in localStorage for immediate access
+      localStorage.setItem('userGoal', JSON.stringify({
+        ...goalData,
+        id: result.id,
+        tasks: result.tasks || []
+      }))
+      
+      return result
+    } catch (error) {
+      console.error('Error creating goal:', error)
+      throw error
+    }
   }
 
   return { saveGoal }
@@ -62,8 +99,10 @@ export default function OnboardingPage() {
   const [goalForm, setGoalForm] = useState({
     goal: '',
     duration: 3,
-    difficulty: 'medium'
+    difficulty: 'medium',
+    xrpAmount: 100
   })
+  const [isCreatingGoal, setIsCreatingGoal] = useState(false)
   const router = useRouter()
   const { saveGoal } = useGoalStorage()
 
@@ -78,8 +117,21 @@ export default function OnboardingPage() {
         alert('Please enter your goal')
         return
       }
+      if (goalForm.xrpAmount <= 0) {
+        alert('Please enter a valid XRP amount')
+        return
+      }
+      
       // Save goal data
-      await saveGoal(goalForm)
+      setIsCreatingGoal(true)
+      try {
+        await saveGoal(goalForm)
+      } catch (error) {
+        alert(`Failed to create goal: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        return
+      } finally {
+        setIsCreatingGoal(false)
+      }
     }
 
     if (isLastStep) {
@@ -182,6 +234,27 @@ export default function OnboardingPage() {
                     </select>
                   </div>
 
+                  {/* XRP Amount Input */}
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-300 mb-2">
+                      XRP Stake Amount
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={goalForm.xrpAmount}
+                        onChange={(e) => handleGoalFormChange('xrpAmount', parseInt(e.target.value) || 0)}
+                        className="w-full bg-neutral-700 border border-neutral-600 rounded-md px-3 py-2.5 text-neutral-100 focus:ring-1 focus:ring-purple-600 focus:border-purple-600 outline-none"
+                        placeholder="100"
+                      />
+                    </div>
+                    <p className="text-xs text-neutral-400 mt-1">
+                      This XRP will be staked to your goal. Complete your tasks to earn rewards, or lose your stake if you don&apos;t!
+                    </p>
+                  </div>
+
                   {/* Difficulty Level */}
                   <div>
                     <label className="block text-sm font-medium text-neutral-300 mb-3">
@@ -235,10 +308,24 @@ export default function OnboardingPage() {
           
           <button
             onClick={handleNext}
-            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors flex items-center space-x-2"
+            disabled={isCreatingGoal}
+            className={`px-6 py-3 text-white rounded-lg font-medium transition-colors flex items-center space-x-2 ${
+              isCreatingGoal 
+                ? "bg-purple-700 opacity-50 cursor-not-allowed" 
+                : "bg-purple-600 hover:bg-purple-700"
+            }`}
           >
-            <span>{isLastStep ? "Get Started" : "Continue"}</span>
-            <ArrowRight className="w-4 h-4" />
+            {isCreatingGoal ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Creating Goal...</span>
+              </>
+            ) : (
+              <>
+                <span>{isLastStep ? "Get Started" : "Continue"}</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
           </button>
         </div>
 
