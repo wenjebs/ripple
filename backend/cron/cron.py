@@ -2,7 +2,6 @@ import os
 from collections import defaultdict
 from dotenv import load_dotenv
 from supabase import create_client
-import requests
 from xrpl.clients import JsonRpcClient
 from xrpl.wallet import Wallet
 from xrpl.models.transactions import Payment
