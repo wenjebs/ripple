@@ -38,7 +38,7 @@ class Task(TaskBase):
     id: UUID = Field(default_factory=uuid4)
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Goal Models
 class GoalBase(BaseModel):
@@ -60,7 +60,7 @@ class Goal(GoalBase):
     tasks: List[Task] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Submission Models
 class SubmissionBase(BaseModel):
@@ -80,7 +80,7 @@ class Submission(SubmissionBase):
     verification_result: Optional[SubmissionVerificationResultEnum] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class GoalStatusResponse(Goal):
     # tasks are already included in Goal model
