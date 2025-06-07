@@ -112,12 +112,12 @@ export default function AddTaskModal({ isOpen, onClose, onAddTask }: AddTaskModa
             >
               Cancel
             </button>
-            <button
+            {/* <button
               className="px-4 py-2 text-sm bg-purple-600 rounded-md hover:bg-purple-700 text-white font-medium transition-colors"
               type="submit"
             >
               Add Task
-            </button>
+            </button> */}
           </div>
         </form>
       </div>

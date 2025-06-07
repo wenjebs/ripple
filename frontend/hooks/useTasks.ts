@@ -12,6 +12,10 @@ const convertBackendTask = (backendTask: GoalData['tasks'][0], _index: number): 
     completed: backendTask.verified === 'true',
     completionStatus: backendTask.verified === 'true' ? 'success' : undefined,
     avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${backendTask.title}&backgroundColor=6366f1`, // Generate avatar based on task title
+    // Backend fields
+    verification_method: backendTask.verification_method,
+    expected_data_type: backendTask.expected_data_type,
+    verified: backendTask.verified,
   }
 }
 

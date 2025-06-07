@@ -13,9 +13,9 @@ class TaskVerifiedEnum(str, Enum):
     FALSE = "false"
 
 class SubmissionVerificationResultEnum(str, Enum):
-    REJECTED = "rejected"
-    APPROVED = "approved"
-    REVERIFY = "reverify"
+    TRUE = "true"
+    FALSE = "false"
+
 
 class ExpectedDataTypeEnum(str, Enum):
     IMAGE = "image"
@@ -108,11 +108,13 @@ class SubmissionCreateRequest(BaseModel): # For API request
 class SubmissionCreate(SubmissionBase): # For DB insertion
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     verification_result: Optional[SubmissionVerificationResultEnum] = None
+    verification_comments: Optional[str] = None
 
 class Submission(SubmissionBase):
     id: UUID = Field(default_factory=uuid4)
     timestamp: datetime
     verification_result: Optional[SubmissionVerificationResultEnum] = None
+    verification_comments: Optional[str] = None
 
     class Config:
         from_attributes = True

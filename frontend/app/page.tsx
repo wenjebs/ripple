@@ -6,7 +6,6 @@ import type { ComponentType } from "react"
 import { useAuth } from "@/hooks/useAuth"
 import {
   Search,
-  Plus,
   Settings,
   User,
   MoreHorizontal,
@@ -17,15 +16,17 @@ import {
   Coins,
   TrendingUp,
   Wallet,
+  LogOut,
   LucideProps,
 } from "lucide-react"
 import TaskCard from "@/components/task-card"
 import AddTaskModal from "@/components/add-task-modal"
-import PhotoSubmissionModal from "@/components/photo-submission-modal"
+import TaskSubmissionModal from "@/components/photo-submission-modal"
 import type { Task } from "@/types/task"
 import { useCurrentGoal } from "@/hooks/useGoal"
 import { useProgress } from "@/hooks/useProgress"
 import { useTasks } from "@/hooks/useTasks"
+import { toast } from "sonner"
 
 // Pool Value Card Component
 const PoolValueCard = ({ 
@@ -227,10 +228,10 @@ export default function TaskManager() {
   const [showAllTasks, setShowAllTasks] = useState(false)
   const [showMonthTasks, setShowMonthTasks] = useState(false)
   const router = useRouter()
-  const { isAuthenticated, isLoading: authLoading, user } = useAuth()
+  const { isAuthenticated, isLoading: authLoading, user, logout } = useAuth()
   
   // Use SWR hooks for real data fetching
-  const { goal, isLoading, isError, hasGoal } = useCurrentGoal()
+  const { goal, isLoading, isError, hasGoal, mutate: refreshGoal } = useCurrentGoal()
   const progress = useProgress(goal)
   const { userStake, totalPool } = useStakeData(goal?.xrp_amount)
   const { incompleteTasks, completedTasks } = useTasks(goal)
@@ -256,6 +257,13 @@ export default function TaskManager() {
       router.push('/onboarding')
     }
   }, [isLoading, hasGoal, isAuthenticated, router])
+
+  // Auto redirect to onboarding if goal data fails to load
+  useEffect(() => {
+    if (!isLoading && isError && isAuthenticated) {
+      router.push('/onboarding')
+    }
+  }, [isLoading, isError, isAuthenticated, router])
 
   // Helper function to get month and week from week_number
   const getMonthAndWeekFromWeekNumber = (weekNumber: number) => {
@@ -305,15 +313,29 @@ export default function TaskManager() {
   }
 
   const handleTaskClick = (task: Task) => {
+    // Check if task is already completed
+    if (task.completed) {
+      toast.info("Task Already Completed", {
+        description: "This task has already been verified and completed. Great job! 🎉"
+      })
+      return
+    }
+    
     setSelectedTask(task)
     setIsPhotoModalOpen(true)
   }
 
-  const handlePhotoSubmission = (taskId: string, photos: File[]) => {
-    // TODO: Implement photo submission via API
-    console.log('Photo submission for task:', taskId, 'Photos:', photos.length)
-    setIsPhotoModalOpen(false)
-    setSelectedTask(null)
+  const handleTaskSubmission = (taskId: string, data: File[] | string) => {
+    // Log the submission but don't close modal - let the modal handle its own state
+    if (Array.isArray(data)) {
+      console.log('Photo submission for task:', taskId, 'Photos:', data.length)
+    } else {
+      console.log('Text submission for task:', taskId, 'Text length:', data.length)
+    }
+    // Refresh goal data to update task completion status
+    refreshGoal()
+    // Modal will stay open to show success/failure messages
+    // User can manually close when ready
   }
 
 
@@ -356,18 +378,13 @@ export default function TaskManager() {
     )
   }
 
-  // Show error state
+  // Show error state (will auto-redirect to onboarding)
   if (isError || !goal) {
     return (
       <div className="bg-neutral-900 text-neutral-100 min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-400 mb-4">Failed to load goal data</p>
-          <button 
-            onClick={() => router.push('/onboarding')}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg"
-          >
-            Go to Onboarding
-          </button>
+          <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-neutral-400">Redirecting to onboarding...</p>
         </div>
       </div>
     )
@@ -409,18 +426,25 @@ export default function TaskManager() {
                 <Coins className="w-4 h-4" />
                 <span>Stake XRP</span>
               </button>
-              <button
+              {/* <button
                 onClick={() => setIsModalOpen(true)}
                 className="px-4 py-2 text-sm bg-purple-600 rounded-md hover:bg-purple-700 text-white flex items-center space-x-1 font-medium transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Task</span>
-              </button>
+              </button> */}
               <button className="p-3 rounded-lg hover:bg-neutral-700 text-neutral-400 hover:text-purple-600 transition-colors">
                 <Settings className="w-6 h-6" />
               </button>
               <button className="p-3 rounded-lg hover:bg-neutral-700 text-neutral-400 hover:text-purple-600 transition-colors">
                 <User className="w-6 h-6" />
+              </button>
+              <button 
+                onClick={logout}
+                className="p-3 rounded-lg hover:bg-neutral-700 text-neutral-400 hover:text-red-500 transition-colors"
+                title="Logout"
+              >
+                <LogOut className="w-6 h-6" />
               </button>
             </div>
           </div>
@@ -600,15 +624,15 @@ export default function TaskManager() {
       {/* Stake Modal */}
       <StakeModal isOpen={isStakeModalOpen} onClose={() => setIsStakeModalOpen(false)} />
 
-      {/* Photo Submission Modal */}
-      <PhotoSubmissionModal 
+      {/* Task Submission Modal */}
+      <TaskSubmissionModal 
         isOpen={isPhotoModalOpen} 
         onClose={() => {
           setIsPhotoModalOpen(false)
           setSelectedTask(null)
         }} 
         task={selectedTask}
-        onSubmit={handlePhotoSubmission} 
+        onSubmit={handleTaskSubmission} 
       />
     </div>
   )

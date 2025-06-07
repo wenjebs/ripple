@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Roboto } from "next/font/google"
 import { AuthProvider } from "@/hooks/useAuth"
+import { Toaster } from "@/components/ui/sonner"
 import "./globals.css"
 
 const roboto = Roboto({
@@ -26,6 +27,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
+        <Toaster />
       </body>
     </html>
   )

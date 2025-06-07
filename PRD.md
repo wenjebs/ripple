@@ -97,7 +97,7 @@ XtraReadyProductivity solves the commitment problem by introducing real financia
 - **Pool Cards**: Total pool value and user's current deposit
 - **Progress Cards**: Month and week progress with navigation
 - **Task Columns**: Incomplete and completed task management
-- **Modals**: Stake deposit modal, add task modal
+- **Modals**: Stake deposit modal, 
 
 ---
 

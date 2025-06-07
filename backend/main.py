@@ -12,14 +12,6 @@ import asyncpg # Added
 # Import routers
 from routers import goals, submissions, tasks, auth
 
-from models import (
-    # User, UserCreate, # Removed User models
-    Goal, GoalCreateRequest, GoalCreate, GoalStatusResponse,
-    Task, TaskCreate,
-    Submission, SubmissionCreateRequest, SubmissionCreate,
-    GoalStatusEnum, TaskVerifiedEnum, SubmissionVerificationResultEnum
-)
-
 load_dotenv()
 
 # SQL Definitions for table creation
@@ -53,7 +45,8 @@ CREATE TABLE IF NOT EXISTS submissions (
     task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
     submitted_data_url TEXT,
     timestamp TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    verification_result VARCHAR(50) CHECK (verification_result IN ('rejected', 'approved', 'reverify'))
+    verification_result TEXT CHECK (verification_result IN ('true', 'false')),
+    verification_comments TEXT
 );
 """
 
@@ -96,6 +89,14 @@ async def initialize_database():
         print("- 'goals' table processed.")
         await conn.execute(CREATE_TASKS_TABLE_SQL)
         print("- 'tasks' table processed.")
+        
+        # Add verification_comments column if it doesn't exist
+        try:
+            await conn.execute("ALTER TABLE submissions ADD COLUMN IF NOT EXISTS verification_comments TEXT;")
+            print("- 'submissions' table verification_comments column added if missing.")
+        except Exception as e:
+            print(f"- Note: Could not add verification_comments column to submissions table: {e}")
+        
         await conn.execute(CREATE_SUBMISSIONS_TABLE_SQL)
         print("- 'submissions' table processed.")
         print("Database tables initialized successfully.")
@@ -134,6 +135,13 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://localhost:3001",
         "http://127.0.0.1:3001",
+        "http://ripple-tan.vercel.app/*",
+        "https://ripple-tan.vercel.app",
+        "https://ripple-tan.vercel.app/api",
+        "https://ripple-tan.vercel.app/api/auth",
+        "https://ripple-tan.vercel.app/api/goals",
+        "https://ripple-tan.vercel.app/api/submissions",
+        "https://ripple-tan.vercel.app/api/tasks",
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],

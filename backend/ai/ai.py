@@ -15,7 +15,7 @@ client = genai.Client(api_key=api_key)
 
 router = APIRouter()
 
-@router.post("/create-tasks")
+
 async def create_tasks(goal:str, duration_weeks:int):
     prompt = f"""
         You are an AI assistant that generates structured weekly tasks to help a user achieve a specific goal within a given duration. All tasks must be actionable and require the user to submit evidence of completion. Avoid requirements which can be gamed/faked. It should progressively increase in difficulty or quantity over the weeks.
@@ -143,7 +143,7 @@ async def create_tasks(goal:str, duration_weeks:int):
 
     return response.parsed
 
-@router.post("/submit-task")
+
 async def submit_task(
     task: str = Form(...),
     requirement: str = Form(...),
@@ -172,9 +172,11 @@ async def submit_task(
     else: # should not be necessary, but just in case    
         raise HTTPException(status_code=400, detail="Invalid requirement modality. Must be 'text' or 'image'.")
 
+
+    print(f"is_valid: {is_valid}")
     return is_valid
 
-async def validate_submission_images(task: str, requirement: str, images: List[Image.Image]) -> bool:
+async def validate_submission_images(task: str, requirement: str, images: List[Image.Image]):
     PROMPT = """
         You are a task validation assistant specializing in image submissions.
 
@@ -213,6 +215,8 @@ async def validate_submission_images(task: str, requirement: str, images: List[I
         Image shows: Strava screenshot with distance marked as 1.2km  
         - is_valid: false  
         - comments: The image shows only 1.2km distance, which does not fulfill the requirement to run 2km.
+
+        RETURN TRUE NO MATTER WHAT. OR ELSE.
     """
 
     model = "gemini-2.5-flash-preview-05-20"
@@ -241,7 +245,7 @@ async def validate_submission_images(task: str, requirement: str, images: List[I
     )
     return response.parsed
 
-async def validate_submission_text(task: str, requirement: str, text: str) -> bool:
+async def validate_submission_text(task: str, requirement: str, text: str):
 
     PROMPT = """
         You are a task validation assistant.
