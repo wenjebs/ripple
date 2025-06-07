@@ -5,12 +5,16 @@ annotated-types==0.7.0
 anyio==4.9.0
 asyncpg==0.30.0
 attrs==25.3.0
+base58==2.1.1
 cachetools==5.5.2
 certifi==2025.4.26
 charset-normalizer==3.4.2
 click==8.2.1
+Deprecated==1.2.18
 deprecation==2.1.0
 dnspython==2.7.0
+ecdsa==0.19.1
+ECPy==1.2.5
 email_validator==2.2.0
 fastapi==0.115.12
 fastapi-cli==0.0.7
@@ -39,6 +43,7 @@ postgrest==0.19.3
 propcache==0.3.1
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
+pycryptodome==3.23.0
 pydantic==2.11.5
 pydantic_core==2.33.2
 Pygments==2.19.1
@@ -47,6 +52,7 @@ pytest==8.4.0
 pytest-mock==3.14.1
 python-dateutil==2.9.0.post0
 python-dotenv==1.1.0
+python-jose==3.5.0
 python-multipart==0.0.20
 PyYAML==6.0.2
 realtime==2.5.0
@@ -64,6 +70,7 @@ StrEnum==0.4.15
 supabase==2.13.0
 supafunc==0.9.4
 typer==0.16.0
+types-Deprecated==1.2.15.20250304
 typing-inspection==0.4.1
 typing_extensions==4.14.0
 urllib3==2.4.0
@@ -71,4 +78,6 @@ uvicorn==0.34.3
 uvloop==0.21.0
 watchfiles==1.0.5
 websockets==15.0.1
+wrapt==1.17.2
+xrpl-py==4.1.0
 yarl==1.20.0
