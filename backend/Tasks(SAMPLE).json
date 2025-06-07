@@ -1,0 +1,37 @@
+{
+    "goal": "Get healthy in 1 month",
+    "duration_weeks": 2,
+    "weeks": [
+      {
+        "week": 1,
+        "tasks": [
+          {
+            "task": "Run 1km",
+            "requirement": "screenshot of Strava showing 1km run",
+            "requirement_modality": "image"
+          },
+          {
+            "task": "Eat a healthy meal",
+            "requirement": "screenshot of healthy meal",
+            "requirement_modality": "image"
+          }
+        ]
+      },
+      {
+        "week": 2,
+        "tasks": [
+          {
+            "task": "Run 2km",
+            "requirement": "screenshot of Strava showing 2km run",
+            "requirement_modality": "image"
+          },
+          {
+            "task": "Eat 2 healthy meals",
+            "requirement": "screenshots of 2 healthy meals",
+            "requirement_modality": "image"
+          }
+        ]
+      }
+    ]
+  }
+  
