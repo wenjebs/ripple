@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, Body
+from fastapi.middleware.cors import CORSMiddleware
 import os
 from supabase import create_client, Client
 from dotenv import load_dotenv
@@ -9,7 +10,7 @@ from contextlib import asynccontextmanager # Added
 import asyncpg # Added
 
 # Import routers
-from routers import goals, submissions, tasks
+from routers import goals, submissions, tasks, auth
 
 from models import (
     # User, UserCreate, # Removed User models
@@ -29,7 +30,8 @@ CREATE TABLE IF NOT EXISTS goals (
     duration_weeks INTEGER NOT NULL,
     xrp_amount REAL NOT NULL,
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    status VARCHAR(50) NOT NULL DEFAULT 'incomplete' CHECK (status IN ('incomplete', 'completed'))
+    status VARCHAR(50) NOT NULL DEFAULT 'incomplete' CHECK (status IN ('incomplete', 'completed')),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
 );
 """
 
@@ -55,6 +57,15 @@ CREATE TABLE IF NOT EXISTS submissions (
 );
 """
 
+CREATE_USERS_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    wallet_address VARCHAR(34) NOT NULL UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_login TIMESTAMP WITH TIME ZONE
+);
+"""
+
 DB_INIT_ERROR_MESSAGE = "Database initialization error. Check DATABASE_URL in .env and ensure PostgreSQL server is accessible."
 
 async def initialize_database():
@@ -69,6 +80,18 @@ async def initialize_database():
         print(f"Connecting to database for initialization...")
         conn = await asyncpg.connect(db_url)
         print("Successfully connected to database. Creating tables...")
+        # Create users table first (referenced by goals)
+        await conn.execute(CREATE_USERS_TABLE_SQL)
+        print("- 'users' table processed.")
+        
+        # Check if goals table needs user_id column
+        try:
+            # Try to add user_id column if it doesn't exist
+            await conn.execute("ALTER TABLE goals ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE CASCADE;")
+            print("- 'goals' table user_id column added if missing.")
+        except Exception as e:
+            print(f"- Note: Could not add user_id column to goals table: {e}")
+        
         await conn.execute(CREATE_GOALS_TABLE_SQL)
         print("- 'goals' table processed.")
         await conn.execute(CREATE_TASKS_TABLE_SQL)
@@ -103,6 +126,20 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+)
+
 # Supabase Connection
 SUPABASE_URL: str = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY: str = os.environ.get("SUPABASE_KEY")
@@ -113,6 +150,7 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Include routers
+app.include_router(auth.router)
 app.include_router(goals.router)
 app.include_router(submissions.router)
 app.include_router(tasks.router)
@@ -125,6 +163,7 @@ async def root():
         "version": "1.0.0",
         "docs": "/docs",
         "endpoints": {
+            "auth": "/auth",
             "goals": "/goals",
             "submissions": "/submissions", 
             "tasks": "/tasks"

@@ -16,7 +16,9 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "swr": "^2.3.3",
-    "tailwind-merge": "^3.3.0"
+    "tailwind-merge": "^3.3.0",
+    "xrpl": "^4.0.0",
+    "xumm": "^1.8.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

@@ -6,7 +6,7 @@ import type { Task } from "@/types/task"
 
 interface TaskCardProps {
   task: Task
-  onToggle: (taskId: string) => void
+  onClick: (task: Task) => void
 }
 
 const getPriorityIcon = (priority: string) => {
@@ -40,13 +40,13 @@ const getBorderColor = (task: Task) => {
   return "border-neutral-700 hover:border-purple-600"
 }
 
-export default function TaskCard({ task, onToggle }: TaskCardProps) {
+export default function TaskCard({ task, onClick }: TaskCardProps) {
   return (
     <div
       className={`bg-neutral-900 p-3 rounded-md border cursor-pointer transition-colors ${getBorderColor(task)} ${
         task.completed ? "opacity-70" : ""
       }`}
-      onClick={() => onToggle(task.id)}
+      onClick={() => onClick(task)}
     >
       <p className={`text-sm text-neutral-100 mb-1 ${task.completed ? "line-through" : ""}`}>{task.title}</p>
       <p className="text-xs text-neutral-400 mb-2">{task.description}</p>

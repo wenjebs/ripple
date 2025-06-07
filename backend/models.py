@@ -1,4 +1,3 @@
-\
 from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional
 from uuid import UUID, uuid4
@@ -21,6 +20,40 @@ class SubmissionVerificationResultEnum(str, Enum):
 class ExpectedDataTypeEnum(str, Enum):
     IMAGE = "image"
     TEXT = "text"
+
+# Authentication Models
+class WalletAuthRequest(BaseModel):
+    wallet_address: str
+
+class WalletAuthChallenge(BaseModel):
+    challenge: str
+    wallet_address: str
+
+class WalletAuthVerify(BaseModel):
+    wallet_address: str
+    signature: str
+    challenge: str
+    xaman_payload_uuid: Optional[str] = None
+    xumm_sdk_auth: Optional[bool] = False
+
+class AuthToken(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+
+class UserBase(BaseModel):
+    wallet_address: str
+
+class UserCreate(UserBase):
+    pass
+
+class User(UserBase):
+    id: UUID = Field(default_factory=uuid4)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    last_login: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
 
 # Task Models
 class TaskBase(BaseModel):
@@ -52,11 +85,13 @@ class GoalCreateRequest(GoalBase): # For API request
 class GoalCreate(GoalBase): # For DB insertion
     start_date: date = Field(default_factory=date.today)
     status: GoalStatusEnum = GoalStatusEnum.INCOMPLETE
+    user_id: UUID  # Add user association
 
 class Goal(GoalBase):
     id: UUID = Field(default_factory=uuid4)
     start_date: date
     status: GoalStatusEnum
+    user_id: UUID  # Add user association
     tasks: List[Task] = []
 
     class Config:

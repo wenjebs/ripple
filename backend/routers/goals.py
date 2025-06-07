@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from uuid import UUID
 import os
 from supabase import create_client, Client
@@ -9,6 +10,7 @@ from models import (
     GoalCreateRequest, GoalCreate, GoalStatusResponse,
     Task, TaskCreate
 )
+from routers.auth import get_current_user_dep
 
 load_dotenv()
 
@@ -30,9 +32,10 @@ router = APIRouter(
 @router.get("/status/{goal_id}", response_model=GoalStatusResponse)
 async def get_goal_status(
     goal_id: UUID,
+    current_user: dict = Depends(get_current_user_dep)
 ):
-    # 1. Fetch goal
-    goal_response = supabase.table("goals").select("*").eq("id", str(goal_id)).maybe_single().execute()
+    # 1. Fetch goal (ensure it belongs to the current user)
+    goal_response = supabase.table("goals").select("*").eq("id", str(goal_id)).eq("user_id", current_user["user_id"]).maybe_single().execute()
     if not goal_response.data:
         raise HTTPException(status_code=404, detail="Goal not found")
     goal_db_data = goal_response.data
@@ -50,13 +53,14 @@ async def get_goal_status(
 @router.post("/create", response_model=GoalStatusResponse)
 async def create_goal(
     goal_data: GoalCreateRequest,
-    # current_user: User = Depends(get_current_user) # Auth dependency removed
+    current_user: dict = Depends(get_current_user_dep)
 ):
     # 1. Create the Goal in the database
     goal_to_create = GoalCreate(
         title=goal_data.title,
         duration_weeks=goal_data.duration_weeks,
-        xrp_amount=goal_data.xrp_amount
+        xrp_amount=goal_data.xrp_amount,
+        user_id=UUID(current_user["user_id"])
     )
     try:
         goal_response = supabase.table("goals").insert(goal_to_create.model_dump(mode='json')).execute()
