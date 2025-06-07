@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+:root {
+  --purple-600: #7919ff;
+  --purple-700: #6b15e3;
+}
+
+body {
+  font-family: "Roboto", sans-serif;
+}
+
+.text-purple-600 {
+  color: var(--purple-600);
+}
+
+.bg-purple-600 {
+  background-color: var(--purple-600);
+}
+
+.hover\:bg-purple-700:hover {
+  background-color: var(--purple-700);
+}
+
+.border-purple-600 {
+  border-color: var(--purple-600);
+}
+
+.ring-purple-600:focus {
+  --tw-ring-color: var(--purple-600);
+}

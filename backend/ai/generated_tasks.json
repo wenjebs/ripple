@@ -1,0 +1,86 @@
+{
+  "goal": "Get healthy in 1 month",
+  "duration_weeks": 4,
+  "weeks": [
+    {
+      "week": 1,
+      "tasks": [
+        {
+          "task": "Track water intake daily for 7 days",
+          "requirement": "screenshot of a water tracking app showing daily intake for the week",
+          "requirement_modality": "image"
+        },
+        {
+          "task": "Complete a 30-minute walk or light cardio session for 5 days",
+          "requirement": "screenshot from a fitness tracking app (e.g., Strava, Google Fit) showing 5 completed sessions of 30+ minutes activity",
+          "requirement_modality": "image"
+        },
+        {
+          "task": "Track food intake for 3 days using a nutrition tracking app",
+          "requirement": "screenshot of the summary page from a nutrition tracking app (e.g., MyFitnessPal) showing 3 days of tracked meals",
+          "requirement_modality": "image"
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "tasks": [
+        {
+          "task": "Perform 3 structured bodyweight workouts (e.g., squats, push-ups, planks)",
+          "requirement": "three distinct screenshots from a workout app or timer showing completion of each workout",
+          "requirement_modality": "image"
+        },
+        {
+          "task": "Ensure at least one fruit and one vegetable are part of your main meals for 5 days",
+          "requirement": "a collage of photos (one per meal) demonstrating the presence of fruit and vegetables in 15 different main meals over 5 days",
+          "requirement_modality": "image"
+        },
+        {
+          "task": "Get 7-8 hours of sleep for 5 nights",
+          "requirement": "screenshot from a sleep tracking app (e.g., Sleep Cycle, Apple Health) showing 5 nights with 7-8 hours of sleep duration",
+          "requirement_modality": "image"
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "tasks": [
+        {
+          "task": "Complete 3 sessions of 20-minute continuous cardio (e.g., jogging, cycling, swimming)",
+          "requirement": "screenshot from a fitness tracking app showing 3 completed sessions of 20+ minutes of continuous cardio",
+          "requirement_modality": "image"
+        },
+        {
+          "task": "Prepare 4 healthy home-cooked meals this week",
+          "requirement": "four distinct photos of the prepared healthy meals before consumption",
+          "requirement_modality": "image"
+        },
+        {
+          "task": "Engage in 15 minutes of stretching or yoga daily for 4 days",
+          "requirement": "four distinct photos of yourself in a stretching or yoga pose, taken on different days",
+          "requirement_modality": "image"
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "tasks": [
+        {
+          "task": "Complete 4 sessions of 45-minute moderate intensity exercise (e.g., brisk walking, hiking, gym workout)",
+          "requirement": "screenshot from a fitness tracking app showing 4 completed sessions of 45+ minutes of moderate intensity exercise",
+          "requirement_modality": "image"
+        },
+        {
+          "task": "Plan and prepare healthy meals for 3 full days in advance",
+          "requirement": "a photo of your meal prep containers or ingredients laid out for 3 days, along with a text description of the planned meals for each day",
+          "requirement_modality": "image"
+        },
+        {
+          "task": "Write a reflection on your progress and outline 2 future health goals",
+          "requirement": "a text document (e.g., screenshot of a note app) containing a paragraph reflecting on your journey and a bulleted list of 2 specific, measurable future health goals",
+          "requirement_modality": "text"
+        }
+      ]
+    }
+  ]
+}
