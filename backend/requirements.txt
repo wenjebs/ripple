@@ -59,3 +59,9 @@ watchfiles==1.0.5
 websockets==15.0.1
 asyncpg
 google-genai==1.19.0
+# Web3 Authentication Dependencies
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.20
+cryptography
+xrpl-py

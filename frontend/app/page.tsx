@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import type { ComponentType } from "react"
+import { useAuth } from "@/hooks/useAuth"
 import {
   Search,
   Plus,
@@ -10,10 +11,6 @@ import {
   User,
   MoreHorizontal,
   Inbox,
-  Calendar,
-  Clock,
-  FolderOpen,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Target,
@@ -24,7 +21,11 @@ import {
 } from "lucide-react"
 import TaskCard from "@/components/task-card"
 import AddTaskModal from "@/components/add-task-modal"
+import PhotoSubmissionModal from "@/components/photo-submission-modal"
 import type { Task } from "@/types/task"
+import { useCurrentGoal } from "@/hooks/useGoal"
+import { useProgress } from "@/hooks/useProgress"
+import { useTasks } from "@/hooks/useTasks"
 
 // Pool Value Card Component
 const PoolValueCard = ({ 
@@ -156,87 +157,12 @@ const ProgressCard = ({
   </div>
 )
 
-// Fake hook for goal data management - TODO: Replace with actual API integration
-const useGoalData = () => {
-  const [goalData, setGoalData] = useState<{
-    goal: string
-    duration: number
-    difficulty: string
-  } | null>(null)
-  const [currentMonth, setCurrentMonth] = useState(1)
-  const [monthWeekProgress, setMonthWeekProgress] = useState<Record<number, number>>({})
-
-  const getCurrentWeek = () => {
-    return monthWeekProgress[currentMonth] || 1
-  }
-
-  const loadGoalData = () => {
-    // TODO: Replace with actual API call
-    try {
-      const stored = localStorage.getItem('userGoal')
-      if (stored) {
-        const data = JSON.parse(stored)
-        setGoalData(data)
-      }
-      // Load progress data
-      const progress = localStorage.getItem('userProgress')
-      if (progress) {
-        const { month, monthWeeks } = JSON.parse(progress)
-        setCurrentMonth(month || 1)
-        setMonthWeekProgress(monthWeeks || {})
-      }
-    } catch (error) {
-      console.error('Failed to load goal data:', error)
-    }
-  }
-
-  const updateMonth = (month: number) => {
-    setCurrentMonth(month)
-    // TODO: Save progress to backend
-    const progress = localStorage.getItem('userProgress')
-    const existingProgress = progress ? JSON.parse(progress) : {}
-    localStorage.setItem('userProgress', JSON.stringify({ 
-      ...existingProgress, 
-      month,
-      monthWeeks: monthWeekProgress
-    }))
-    console.log('Updated month to:', month)
-  }
-
-  const updateWeek = (week: number) => {
-    const newMonthWeekProgress = {
-      ...monthWeekProgress,
-      [currentMonth]: week
-    }
-    setMonthWeekProgress(newMonthWeekProgress)
-    // TODO: Save progress to backend
-    const progress = localStorage.getItem('userProgress')
-    const existingProgress = progress ? JSON.parse(progress) : {}
-    localStorage.setItem('userProgress', JSON.stringify({ 
-      ...existingProgress, 
-      month: currentMonth,
-      monthWeeks: newMonthWeekProgress
-    }))
-    console.log('Updated week to:', week, 'for month:', currentMonth)
-  }
+// Fake hook for stake data management - TODO: Replace with actual API integration when backend endpoint is available
+const useStakeData = (goalXrpAmount?: number) => {
+  const [totalPool] = useState(15420.75) // Total pool value in XRP - this needs a backend endpoint
 
   return {
-    goalData,
-    currentMonth,
-    currentWeek: getCurrentWeek(),
-    loadGoalData,
-    updateMonth,
-    updateWeek,
-  }
-}
-
-// Fake hook for stake data management - TODO: Replace with actual API integration
-const useStakeData = () => {
-  const [userStake] = useState(0) // User's current stake in XRP
-  const [totalPool] = useState(15420.75) // Total pool value in XRP
-
-  return {
-    userStake,
+    userStake: goalXrpAmount || 0, // Use the XRP amount from the goal
     totalPool,
   }
 }
@@ -291,79 +217,23 @@ const StakeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
   )
 }
 
-const initialTasks: Task[] = [
-  {
-    id: "PH-01",
-    title: "Set project timeline",
-    description: "Specify the duration (e.g., 3 months)",
-    priority: "medium",
-    completed: false,
-    avatar:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAZCwOxhrzD9PFSJIN3BSdkng_SDkplI6av3a1-OmwkhhY7k1kUKhu1e1VM_gx5gN_wG72EH_TPSMaiDFh2vKpz7CVVlLHEUGh-LCF3-KoPI_HlKV6f_tZa5cxy6ub7nFhh7qICdRcBtt1tv3oTT8BfzrufrmOSB4hhUWUh38poBB5m31pya_L5UaB9i23USSR4z3YKocHPm1twQRLZ6Vl-rDKzjt5VOrIvNcULYF3puh3mJSISsuLqtQsBzPaWMQ_bXIyqUQvY5eb3",
-  },
-  {
-    id: "PH-02",
-    title: "Week 1: Research & Planning",
-    description: "AI generated tasks for the first week.",
-    priority: "high",
-    completed: false,
-    avatar:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBIkgRTS2Pdt7EW1UR02LxXgSqwu--lnB17uu6qZDZB9pe3Vy54AGacKJvWc21vGr2LS3w8HVbikQxiYSbBtKLwFgI8cE_GTS66-xSqIgXHxWZ3ZCKEm2f38QZK1Z6G1lrTF1eFKL-Oynw3h3Q9IXQA1uJLd6crimsKJVaPru52ezxJXUGpGFll78Dzvjbtk3aho24gkx0yJzZPnLTtZcWLgIfRuumxTNSuJ2UQlMqobHgIT4_sH12tKP6rfS1nBQbRtov1loPsrH-_",
-  },
-  {
-    id: "PH-03",
-    title: "Week 2: Design Phase",
-    description: "AI generated tasks for visual design.",
-    priority: "low",
-    completed: false,
-    avatar:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBStsm9fP5PBjElYvX1Y2uX5v_EYTu4MZoPdyzx_iqm0PHVv5ZNjZXLFx_6503YXGJY1RTWS0mqDN5u6IQkmLaYhihO7G6dp18cNMn0P_MZ5R4IX2vsWMG83ogFIuOqaYZ_XyFksJomDYBb55zCXJgnweAXpcCz8OXtSz3uZhgjM6AEjkm4Bxt5_9qnORqAIwHorzCEr0s45bFEX8hOyvbUdK47Pm2VDWEhEgTgJhHgs9FDXSAl0G3qmGHP_UeZc5OZKJR5afRZ3yM-",
-  },
-  {
-    id: "PH-05",
-    title: "Submit Week 1 Deliverables",
-    description: "AI will verify completion based on requirements.",
-    priority: "medium",
-    completed: false,
-    avatar:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBjj80LSMV6ctTp1NV5o1v7h83ggtNlMv1hiLyygFS0VUoD_T4X6GeStZnHU-PSI92cvSez4wk7Gmw7kqRjcqO-ehkkP418nOk8ONHNYI9mXZSy-u0M1df04buqIglUXdBbNx06k8SEtkSWMQav79t2vpdi1_EVII0Cym1_gcLExc2f_N9jLJ2S6RQfjEXpDG5MLY81zQeG-Mf02opKskO_XdSU2u-XwD5By4h5iEa24uCJU5uAQ18yxXHPqVI5uNYohCWBwGihK2mf",
-  },
-  {
-    id: "PH-06",
-    title: "Week 1 - Research Completed",
-    description: "All tasks successfully verified by AI.",
-    priority: "medium",
-    completed: true,
-    completionStatus: "success",
-    avatar:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBPyD-CyZky-etvbU_THF1hB16dj8Y8wtLeaXmrjZsgv5Z7TturDKIX4HAwk2nO3Y_ogR2KkE_Z6WqnqbWbazrUU3rKgTd8wx8BeJ7kqMuCzkBWpjqTDHz3FnGNn2whbe1AehN7xLVgqNJyDO58F5r4JcyZjdpqDaLwiVgf7ZMkwIbXbIFWjSfHPs7VkGsFpn5rFdabL9elrR64riQcjyh0RLc_6aScamCvN03gGLzH3_kO8CJ5W6iGZQu8B0HE17sfAymCxy_9Z8jN",
-  },
-  {
-    id: "PH-07",
-    title: "Week 2 - Design (Incomplete)",
-    description: "Penalized: 30% tasks uncompleted.",
-    priority: "high",
-    completed: true,
-    completionStatus: "failed",
-    avatar:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBmxKU8IxulbTErkZUICaB3qSGFzX7WX4XdMkqz38isDSYJ6uj3EqZKUL6nlWB75nWdzsygcZKFWchSy7O6Bgg3u--Z1SKEqkKdmPs5Eioly4YpnbYRGGWjUOaKFiOuC9Z5dd7K5ngjvt96v5T8lGUFZdaLXADMNMwRFJedHWkDPhviDpU5S086X2M48Xb9vaFhHkCH4RVWTb3EA8hXN7Wq2V-4T1k5rFunkI0fD0ZTZg5JcZ_RlO6A2_6Su4yP_W4MN6vcI2-HrFfi",
-  },
-]
-
 export default function TaskManager() {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isStakeModalOpen, setIsStakeModalOpen] = useState(false)
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false)
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [walletId, setWalletId] = useState<string | null>(null)
+  const [showAllTasks, setShowAllTasks] = useState(false)
+  const [showMonthTasks, setShowMonthTasks] = useState(false)
   const router = useRouter()
-  const { goalData, currentMonth, currentWeek, loadGoalData, updateMonth, updateWeek } = useGoalData()
-  const { userStake, totalPool } = useStakeData()
-
-  // Load goal data on component mount
-  useEffect(() => {
-    loadGoalData()
-  }, [])
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth()
+  
+  // Use SWR hooks for real data fetching
+  const { goal, isLoading, isError, hasGoal } = useCurrentGoal()
+  const progress = useProgress(goal)
+  const { userStake, totalPool } = useStakeData(goal?.xrp_amount)
+  const { incompleteTasks, completedTasks } = useTasks(goal)
 
   // Load wallet ID from localStorage
   useEffect(() => {
@@ -373,87 +243,131 @@ export default function TaskManager() {
     }
   }, [])
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/login')
+    }
+  }, [authLoading, isAuthenticated, router])
+
   // Redirect to onboarding if no goal data
   useEffect(() => {
-    if (goalData === null) {
-      // Give some time for localStorage to load before redirecting
-      const timer = setTimeout(() => {
-        if (goalData === null) {
-          router.push('/onboarding')
-        }
-      }, 1000)
-      return () => clearTimeout(timer)
+    if (!isLoading && !hasGoal && isAuthenticated) {
+      router.push('/onboarding')
     }
-  }, [goalData, router])
+  }, [isLoading, hasGoal, isAuthenticated, router])
 
-  const incompleteTasks = tasks.filter((task) => !task.completed)
-  const completedTasks = tasks.filter((task) => task.completed)
+  // Helper function to get month and week from week_number
+  const getMonthAndWeekFromWeekNumber = (weekNumber: number) => {
+    const month = Math.ceil(weekNumber / 4)
+    const week = ((weekNumber - 1) % 4) + 1
+    return { month, week }
+  }
 
-  const filteredIncompleteTasks = incompleteTasks.filter(
-    (task) =>
-      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      task.description.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+  // Filter tasks based on current month/week selection and search query
+  const filterTasksByMonthWeek = (tasks: Task[]) => {
+    return tasks.filter((task) => {
+      // Check if task matches search query
+      const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           task.description.toLowerCase().includes(searchQuery.toLowerCase())
+      
+      // If showing all tasks, only filter by search query
+      if (showAllTasks) {
+        return matchesSearch
+      }
+      
+      // Find the original backend task to get week_number
+      const backendTask = goal?.tasks.find(t => t.id === task.id)
+      if (!backendTask) return false
+      
+      const { month: taskMonth, week: taskWeek } = getMonthAndWeekFromWeekNumber(backendTask.week_number)
+      
+      // If showing month tasks, filter by month only
+      if (showMonthTasks) {
+        const matchesMonth = taskMonth === progress.currentMonth
+        return matchesMonth && matchesSearch
+      }
+      
+      // Check if task matches current selected month and week
+      const matchesMonthWeek = taskMonth === progress.currentMonth && taskWeek === progress.currentWeek
+      
+      return matchesMonthWeek && matchesSearch
+    })
+  }
 
-  const filteredCompletedTasks = completedTasks.filter(
-    (task) =>
-      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      task.description.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+  const filteredIncompleteTasks = filterTasksByMonthWeek(incompleteTasks)
+  const filteredCompletedTasks = filterTasksByMonthWeek(completedTasks)
 
   const handleAddTask = (newTask: Omit<Task, "id">) => {
-    const task: Task = {
-      ...newTask,
-      id: `PH-${String(tasks.length + 1).padStart(2, "0")}`,
-    }
-    setTasks([...tasks, task])
+    // TODO: Implement adding tasks via API
+    console.log('Add task:', newTask)
     setIsModalOpen(false)
   }
 
-  const handleToggleTask = (taskId: string) => {
-    setTasks(tasks.map((task) => (task.id === taskId ? { ...task, completed: !task.completed } : task)))
+  const handleTaskClick = (task: Task) => {
+    setSelectedTask(task)
+    setIsPhotoModalOpen(true)
   }
 
+  const handlePhotoSubmission = (taskId: string, photos: File[]) => {
+    // TODO: Implement photo submission via API
+    console.log('Photo submission for task:', taskId, 'Photos:', photos.length)
+    setIsPhotoModalOpen(false)
+    setSelectedTask(null)
+  }
+
+
+
   const handlePreviousMonth = () => {
-    if (currentMonth > 1) {
-      updateMonth(currentMonth - 1)
+    if (progress.canGoPreviousMonth) {
+      progress.updateMonth(progress.currentMonth - 1)
     }
   }
 
   const handleNextMonth = () => {
-    if (goalData && currentMonth < goalData.duration) {
-      updateMonth(currentMonth + 1)
+    if (progress.canGoNextMonth) {
+      progress.updateMonth(progress.currentMonth + 1)
     }
   }
 
   const handlePreviousWeek = () => {
-    if (currentWeek > 1) {
-      updateWeek(currentWeek - 1)
+    if (progress.canGoPreviousWeek) {
+      progress.updateWeek(progress.currentWeek - 1)
     }
   }
 
   const handleNextWeek = () => {
-    if (currentWeek < 4) {
-      updateWeek(currentWeek + 1)
+    if (progress.canGoNextWeek) {
+      progress.updateWeek(progress.currentWeek + 1)
     }
   }
 
-  const getDifficultyBadgeColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'easy': return 'bg-green-600/20 text-green-400'
-      case 'medium': return 'bg-yellow-600/20 text-yellow-400'
-      case 'hard': return 'bg-red-600/20 text-red-400'
-      default: return 'bg-neutral-600/20 text-neutral-400'
-    }
-  }
-
-  // Show loading state while checking for goal data
-  if (goalData === null) {
+  // Show loading state while checking authentication or goal data
+  if (authLoading || isLoading) {
     return (
       <div className="bg-neutral-900 text-neutral-100 min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-neutral-400">Loading your goals...</p>
+          <p className="text-neutral-400">
+            {authLoading ? 'Authenticating...' : 'Loading your goals...'}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (isError || !goal) {
+    return (
+      <div className="bg-neutral-900 text-neutral-100 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-400 mb-4">Failed to load goal data</p>
+          <button 
+            onClick={() => router.push('/onboarding')}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg"
+          >
+            Go to Onboarding
+          </button>
         </div>
       </div>
     )
@@ -477,11 +391,14 @@ export default function TaskManager() {
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              {walletId && (
+              {(user?.wallet_address || walletId) && (
                 <div className="hidden md:flex items-center space-x-2 px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700">
                   <Wallet className="w-4 h-4 text-purple-400" />
                   <span className="text-sm text-neutral-300 font-mono">
-                    {walletId.length > 20 ? `${walletId.slice(0, 8)}...${walletId.slice(-8)}` : walletId}
+                    {(() => {
+                      const address = user?.wallet_address || walletId || ''
+                      return address.length > 20 ? `${address.slice(0, 8)}...${address.slice(-8)}` : address
+                    })()}
                   </span>
                 </div>
               )}
@@ -514,15 +431,12 @@ export default function TaskManager() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
               <h2 className="text-2xl font-semibold text-neutral-100">
-                My Goal: <span className="text-purple-400">{goalData.goal}</span>
+                My Goal: <span className="text-purple-400">{goal.title}</span>
               </h2>
-              <span className={`px-2 py-1 text-xs rounded-full font-medium ${getDifficultyBadgeColor(goalData.difficulty)}`}>
-                {goalData.difficulty.charAt(0).toUpperCase() + goalData.difficulty.slice(1)}
-              </span>
             </div>
             <div className="flex items-center space-x-2 text-sm text-neutral-400">
               <Target className="w-4 h-4" />
-              <span>{goalData.duration} month{goalData.duration > 1 ? 's' : ''} goal</span>
+              <span>{progress.totalMonths} month{progress.totalMonths > 1 ? 's' : ''} goal</span>
             </div>
           </div>
           
@@ -556,27 +470,27 @@ export default function TaskManager() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <ProgressCard
                 title="Month Progress"
-                current={currentMonth}
-                total={goalData.duration}
+                current={progress.currentMonth}
+                total={progress.totalMonths}
                 onPrevious={handlePreviousMonth}
                 onNext={handleNextMonth}
-                canGoPrevious={currentMonth > 1}
-                canGoNext={currentMonth < goalData.duration}
+                canGoPrevious={progress.canGoPreviousMonth}
+                canGoNext={progress.canGoNextMonth}
                 progressColor="bg-purple-600"
-                indicators={Array.from({ length: goalData.duration }, (_, i) => i + 1)}
-                onIndicatorClick={updateMonth}
+                indicators={Array.from({ length: progress.totalMonths }, (_, i) => i + 1)}
+                onIndicatorClick={progress.updateMonth}
               />
               <ProgressCard
                 title="Week Progress"
-                current={currentWeek}
+                current={progress.currentWeek}
                 total={4}
                 onPrevious={handlePreviousWeek}
                 onNext={handleNextWeek}
-                canGoPrevious={currentWeek > 1}
-                canGoNext={currentWeek < 4}
+                canGoPrevious={progress.canGoPreviousWeek}
+                canGoNext={progress.canGoNextWeek}
                 progressColor="bg-green-600"
                 indicators={[1, 2, 3, 4]}
-                onIndicatorClick={updateWeek}
+                onIndicatorClick={progress.updateWeek}
               />
             </div>
           </div>
@@ -598,22 +512,47 @@ export default function TaskManager() {
 
         {/* Navigation Tabs */}
         <div className="flex space-x-2 mb-6">
-          <button className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-neutral-300 bg-neutral-800 hover:bg-neutral-700 hover:text-neutral-100 transition-colors">
+          <button 
+            onClick={() => {
+              setShowAllTasks(false)
+              setShowMonthTasks(false)
+            }}
+            className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
+              !showAllTasks && !showMonthTasks
+                ? 'text-blue-100 bg-blue-600 hover:bg-blue-700' 
+                : 'text-neutral-300 bg-neutral-800 hover:bg-neutral-700 hover:text-neutral-100'
+            }`}
+          >
+            <Target className="w-5 h-5" />
+            <span>Current Week</span>
+          </button>
+          <button 
+            onClick={() => {
+              setShowAllTasks(false)
+              setShowMonthTasks(true)
+            }}
+            className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
+              showMonthTasks 
+                ? 'text-green-100 bg-green-600 hover:bg-green-700' 
+                : 'text-neutral-300 bg-neutral-800 hover:bg-neutral-700 hover:text-neutral-100'
+            }`}
+          >
+            <Coins className="w-5 h-5" />
+            <span>This Month</span>
+          </button>
+          <button 
+            onClick={() => {
+              setShowAllTasks(true)
+              setShowMonthTasks(false)
+            }}
+            className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
+              showAllTasks 
+                ? 'text-purple-100 bg-purple-600 hover:bg-purple-700' 
+                : 'text-neutral-300 bg-neutral-800 hover:bg-neutral-700 hover:text-neutral-100'
+            }`}
+          >
             <Inbox className="w-5 h-5" />
             <span>All Tasks</span>
-          </button>
-          <button className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-neutral-300 bg-neutral-800 hover:bg-neutral-700 hover:text-neutral-100 transition-colors">
-            <Calendar className="w-5 h-5" />
-            <span>Today</span>
-          </button>
-          <button className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-neutral-300 bg-neutral-800 hover:bg-neutral-700 hover:text-neutral-100 transition-colors">
-            <Clock className="w-5 h-5" />
-            <span>Upcoming</span>
-          </button>
-          <button className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-neutral-300 bg-neutral-800 hover:bg-neutral-700 hover:text-neutral-100 transition-colors">
-            <FolderOpen className="w-5 h-5" />
-            <span>Projects</span>
-            <ChevronDown className="w-4 h-4 ml-auto" />
           </button>
         </div>
 
@@ -631,7 +570,7 @@ export default function TaskManager() {
             </div>
             <div className="space-y-3">
               {filteredIncompleteTasks.map((task) => (
-                <TaskCard key={task.id} task={task} onToggle={handleToggleTask} />
+                <TaskCard key={task.id} task={task} onClick={handleTaskClick} />
               ))}
             </div>
           </div>
@@ -648,7 +587,7 @@ export default function TaskManager() {
             </div>
             <div className="space-y-3">
               {filteredCompletedTasks.map((task) => (
-                <TaskCard key={task.id} task={task} onToggle={handleToggleTask} />
+                <TaskCard key={task.id} task={task} onClick={handleTaskClick} />
               ))}
             </div>
           </div>
@@ -660,6 +599,17 @@ export default function TaskManager() {
       
       {/* Stake Modal */}
       <StakeModal isOpen={isStakeModalOpen} onClose={() => setIsStakeModalOpen(false)} />
+
+      {/* Photo Submission Modal */}
+      <PhotoSubmissionModal 
+        isOpen={isPhotoModalOpen} 
+        onClose={() => {
+          setIsPhotoModalOpen(false)
+          setSelectedTask(null)
+        }} 
+        task={selectedTask}
+        onSubmit={handlePhotoSubmission} 
+      />
     </div>
   )
 }
