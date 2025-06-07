@@ -230,7 +230,7 @@ export default function TaskManager() {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth()
   
   // Use SWR hooks for real data fetching
-  const { goal, isLoading, isError, hasGoal } = useCurrentGoal()
+  const { goal, isLoading, isError, hasGoal, mutate: refreshGoal } = useCurrentGoal()
   const progress = useProgress(goal)
   const { userStake, totalPool } = useStakeData(goal?.xrp_amount)
   const { incompleteTasks, completedTasks } = useTasks(goal)
@@ -310,10 +310,12 @@ export default function TaskManager() {
   }
 
   const handlePhotoSubmission = (taskId: string, photos: File[]) => {
-    // TODO: Implement photo submission via API
+    // Log the submission but don't close modal - let the modal handle its own state
     console.log('Photo submission for task:', taskId, 'Photos:', photos.length)
-    setIsPhotoModalOpen(false)
-    setSelectedTask(null)
+    // Refresh goal data to update task completion status
+    refreshGoal()
+    // Modal will stay open to show success/failure messages
+    // User can manually close when ready
   }
 
 

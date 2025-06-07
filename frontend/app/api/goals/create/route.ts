@@ -6,8 +6,7 @@ export async function POST(request: NextRequest) {
     
     // Get Authorization header from the request
     const authHeader = request.headers.get('authorization')
-    
-    // Proxy the request to the backend
+    console.log("backend url",process.env.BACKEND_URL)    // Proxy the request to the backend
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000'
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',

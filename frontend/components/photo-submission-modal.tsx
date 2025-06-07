@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react"
 import { X, Upload, Camera, CheckCircle } from "lucide-react"
+import { toast } from "sonner"
 import type { Task } from "@/types/task"
 
 interface PhotoSubmissionModalProps {
@@ -20,7 +21,11 @@ export default function PhotoSubmissionModal({
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [dragOver, setDragOver] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitSuccess, setSubmitSuccess] = useState<{ message: string; comments?: string } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
   if (!isOpen || !task) return null
 
@@ -57,19 +62,109 @@ export default function PhotoSubmissionModal({
   const handleSubmit = async () => {
     if (selectedFiles.length === 0) return
     
+    // Check if task is already completed
+    if (task.completed) {
+      toast.info("Task Already Completed", {
+        description: "This task has already been verified and completed. Great job! 🎉"
+      })
+      return
+    }
+    
     setIsSubmitting(true)
+    setSubmitError(null)
+    setSubmitSuccess(null)
     
     try {
-      // TODO: Replace with actual API call when endpoint is ready
-      await new Promise(resolve => setTimeout(resolve, 2000)) // Simulate API call
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem('auth_token')
+      if (!authToken) {
+        throw new Error('Authentication token not found. Please log in again.')
+      }
+
+      // First, fetch the complete task data to get verification_method and expected_data_type
+      const taskResponse = await fetch(`${API_BASE_URL}/tasks/${task.id}`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+        },
+      })
+
+      if (!taskResponse.ok) {
+        if (taskResponse.status === 401) {
+          throw new Error('Authentication failed. Please log in again.')
+        }
+        throw new Error('Failed to fetch task details')
+      }
+
+      const taskData = await taskResponse.json()
+
+      // Validate that we have the required fields
+      if (!taskData.verification_method && !task.description) {
+        throw new Error('Task requirement information is missing')
+      }
+
+      if (!taskData.expected_data_type) {
+        console.warn('Expected data type not found, defaulting to image')
+      }
+
+      // Create FormData for submission
+      const formData = new FormData()
+      formData.append('task', task.id)
+      formData.append('requirement', taskData.verification_method || task.description)
+      formData.append('requirement_modality_form', taskData.expected_data_type || 'image')
+
+      // Add all selected files
+      selectedFiles.forEach((file) => {
+        formData.append('submission_images', file)
+      })
+
+      // Submit to backend
+      const response = await fetch(`${API_BASE_URL}/submissions/submit_task_form/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+        },
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Submission failed' }))
+        throw new Error(errorData.detail || 'Failed to submit photos')
+      }
+
+      const result = await response.json()
+      console.log('Submission successful:', result)
       
-      onSubmit(task.id, selectedFiles)
+      const isVerified = result.verification_result === 'true'
       
-      // Reset form
-      setSelectedFiles([])
-      onClose()
+      if (isVerified) {
+        // Success - show encouraging message and toast
+        setSubmitSuccess({
+          message: '🎉 Excellent work! Your task has been verified successfully!',
+          comments: result.verification_comments
+        })
+        
+        // Show success toast
+        toast.success("Task Verified! 🎉", {
+          description: "Your task has been completed and moved to the completed section."
+        })
+        
+        onSubmit(task.id, selectedFiles)
+        
+        // Keep modal open so user can see the encouraging feedback
+      } else {
+        // Failed verification - show error and keep modal open
+        setSubmitError(`Verification failed: ${result.verification_comments || 'Please check your submission and try again.'}`)
+        
+        // Show failure toast
+        toast.error("Verification Failed", {
+          description: "Please review the feedback and try submitting again."
+        })
+        
+        // Don't close modal, let user try again
+      }
     } catch (error) {
       console.error('Error submitting photos:', error)
+      setSubmitError(error instanceof Error ? error.message : 'Failed to submit photos')
     } finally {
       setIsSubmitting(false)
     }
@@ -78,6 +173,8 @@ export default function PhotoSubmissionModal({
   const handleClose = () => {
     if (!isSubmitting) {
       setSelectedFiles([])
+      setSubmitError(null)
+      setSubmitSuccess(null)
       onClose()
     }
   }
@@ -107,6 +204,23 @@ export default function PhotoSubmissionModal({
             <h3 className="font-medium text-neutral-100 mb-1">{task.title}</h3>
             <p className="text-sm text-neutral-400">{task.description}</p>
           </div>
+
+          {/* Error Display */}
+          {submitError && (
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <p className="text-sm text-red-400">{submitError}</p>
+            </div>
+          )}
+
+          {/* Success Display */}
+          {submitSuccess && (
+            <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+              <p className="text-sm text-green-400 font-medium mb-2">{submitSuccess.message}</p>
+              {submitSuccess.comments && (
+                <p className="text-sm text-green-300">{submitSuccess.comments}</p>
+              )}
+            </div>
+          )}
 
           {/* File Upload Area */}
           <div

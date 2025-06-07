@@ -83,6 +83,7 @@ async def submit_task(
 
     # 2. Perform AI verification
     verification_status_enum: SubmissionVerificationResultEnum # Type hint for clarity
+    verification_comments: str = ""
     try:
         ai_response_dict = await ai_verify_submission_content(
             task=task_db_data["title"],
@@ -100,6 +101,9 @@ async def submit_task(
             verification_status_enum = SubmissionVerificationResultEnum.TRUE
         else:
             verification_status_enum = SubmissionVerificationResultEnum.FALSE
+        
+        # Extract comments from AI response
+        verification_comments = ai_response_dict.get("comments", "No comments provided")
 
     except HTTPException as e: 
         raise e
@@ -111,7 +115,8 @@ async def submit_task(
     submission_to_create = SubmissionCreate(
         task_id=task_id,
         submitted_data_url=actual_submission_url_for_db,
-        verification_result=verification_status_enum.value # Ensure .value is used here
+        verification_result=verification_status_enum.value, # Ensure .value is used here
+        verification_comments=verification_comments
     )
     
     # Add this print statement for debugging the exact payload
