@@ -1,24 +1,29 @@
 {
-  "goal": "Get healthy in 1 month",
-  "duration_weeks": 4,
+  "goal": "get healthy",
+  "duration_weeks": 5,
   "weeks": [
     {
       "week": 1,
       "tasks": [
         {
-          "task": "Track water intake daily for 7 days",
-          "requirement": "screenshot of a water tracking app showing daily intake for the week",
+          "task": "Walk 30 minutes daily for 3 days",
+          "requirement": "Screenshot of a fitness tracker showing 3 daily 30-minute walks",
           "requirement_modality": "image"
         },
         {
-          "task": "Complete a 30-minute walk or light cardio session for 5 days",
-          "requirement": "screenshot from a fitness tracking app (e.g., Strava, Google Fit) showing 5 completed sessions of 30+ minutes activity",
+          "task": "Prepare and eat one healthy homemade meal",
+          "requirement": "Photo of your healthy homemade meal",
           "requirement_modality": "image"
         },
         {
-          "task": "Track food intake for 3 days using a nutrition tracking app",
-          "requirement": "screenshot of the summary page from a nutrition tracking app (e.g., MyFitnessPal) showing 3 days of tracked meals",
-          "requirement_modality": "image"
+          "task": "Drink 8 glasses of water daily for 2 days",
+          "requirement": "Text confirmation of drinking 8 glasses of water for 2 days",
+          "requirement_modality": "text"
+        },
+        {
+          "task": "Calculate 1 + 1 (FOR DEMO PURPOSES)",
+          "requirement": "Submit the result of 1 + 1",
+          "requirement_modality": "text"
         }
       ]
     },
@@ -26,19 +31,24 @@
       "week": 2,
       "tasks": [
         {
-          "task": "Perform 3 structured bodyweight workouts (e.g., squats, push-ups, planks)",
-          "requirement": "three distinct screenshots from a workout app or timer showing completion of each workout",
+          "task": "Walk 45 minutes daily for 4 days",
+          "requirement": "Screenshot of a fitness tracker showing 4 daily 45-minute walks",
           "requirement_modality": "image"
         },
         {
-          "task": "Ensure at least one fruit and one vegetable are part of your main meals for 5 days",
-          "requirement": "a collage of photos (one per meal) demonstrating the presence of fruit and vegetables in 15 different main meals over 5 days",
+          "task": "Prepare and eat two healthy homemade meals",
+          "requirement": "Photos of your two healthy homemade meals",
           "requirement_modality": "image"
         },
         {
-          "task": "Get 7-8 hours of sleep for 5 nights",
-          "requirement": "screenshot from a sleep tracking app (e.g., Sleep Cycle, Apple Health) showing 5 nights with 7-8 hours of sleep duration",
-          "requirement_modality": "image"
+          "task": "Replace one sugary drink with water daily for 5 days",
+          "requirement": "Text confirmation of replacing one sugary drink with water for 5 days",
+          "requirement_modality": "text"
+        },
+        {
+          "task": "Calculate 1 + 1 (FOR DEMO PURPOSES)",
+          "requirement": "Submit the result of 1 + 1",
+          "requirement_modality": "text"
         }
       ]
     },
@@ -46,19 +56,24 @@
       "week": 3,
       "tasks": [
         {
-          "task": "Complete 3 sessions of 20-minute continuous cardio (e.g., jogging, cycling, swimming)",
-          "requirement": "screenshot from a fitness tracking app showing 3 completed sessions of 20+ minutes of continuous cardio",
+          "task": "Complete 3 light cardio sessions (30 min each) or walk 1 hour daily for 3 days",
+          "requirement": "Screenshots of fitness tracker showing 3 cardio sessions or 3 daily 1-hour walks",
           "requirement_modality": "image"
         },
         {
-          "task": "Prepare 4 healthy home-cooked meals this week",
-          "requirement": "four distinct photos of the prepared healthy meals before consumption",
+          "task": "Prepare and eat three healthy homemade meals",
+          "requirement": "Photos of your three healthy homemade meals",
           "requirement_modality": "image"
         },
         {
-          "task": "Engage in 15 minutes of stretching or yoga daily for 4 days",
-          "requirement": "four distinct photos of yourself in a stretching or yoga pose, taken on different days",
+          "task": "Track food intake for 3 days using a nutrition app",
+          "requirement": "Screenshots of your daily food logs from a nutrition app for 3 days",
           "requirement_modality": "image"
+        },
+        {
+          "task": "Calculate 1 + 1 (FOR DEMO PURPOSES)",
+          "requirement": "Submit the result of 1 + 1",
+          "requirement_modality": "text"
         }
       ]
     },
@@ -66,18 +81,48 @@
       "week": 4,
       "tasks": [
         {
-          "task": "Complete 4 sessions of 45-minute moderate intensity exercise (e.g., brisk walking, hiking, gym workout)",
-          "requirement": "screenshot from a fitness tracking app showing 4 completed sessions of 45+ minutes of moderate intensity exercise",
+          "task": "Complete 4 moderate cardio sessions (40 min each) or walk 1 hour daily for 4 days",
+          "requirement": "Screenshots of fitness tracker showing 4 cardio sessions or 4 daily 1-hour walks",
           "requirement_modality": "image"
         },
         {
-          "task": "Plan and prepare healthy meals for 3 full days in advance",
-          "requirement": "a photo of your meal prep containers or ingredients laid out for 3 days, along with a text description of the planned meals for each day",
+          "task": "Plan and prepare healthy meals for 3 days in advance",
+          "requirement": "Photos of your meal prep for 3 days",
           "requirement_modality": "image"
         },
         {
-          "task": "Write a reflection on your progress and outline 2 future health goals",
-          "requirement": "a text document (e.g., screenshot of a note app) containing a paragraph reflecting on your journey and a bulleted list of 2 specific, measurable future health goals",
+          "task": "Incorporate one serving of vegetables into every dinner for 5 days",
+          "requirement": "Text confirmation of including vegetables in dinner for 5 days",
+          "requirement_modality": "text"
+        },
+        {
+          "task": "Calculate 1 + 1 (FOR DEMO PURPOSES)",
+          "requirement": "Submit the result of 1 + 1",
+          "requirement_modality": "text"
+        }
+      ]
+    },
+    {
+      "week": 5,
+      "tasks": [
+        {
+          "task": "Complete 5 moderate cardio sessions (45 min each) or walk 1 hour daily for 5 days",
+          "requirement": "Screenshots of fitness tracker showing 5 cardio sessions or 5 daily 1-hour walks",
+          "requirement_modality": "image"
+        },
+        {
+          "task": "Maintain a healthy eating routine for the entire week (at least 3 healthy meals per day)",
+          "requirement": "Photos of 3 healthy meals per day for 3 chosen days of the week",
+          "requirement_modality": "image"
+        },
+        {
+          "task": "Reflect on progress and identify one new healthy habit to continue",
+          "requirement": "Text description of your progress and the new habit you'll continue",
+          "requirement_modality": "text"
+        },
+        {
+          "task": "Calculate 1 + 1 (FOR DEMO PURPOSES)",
+          "requirement": "Submit the result of 1 + 1",
           "requirement_modality": "text"
         }
       ]
