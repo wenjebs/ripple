@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import type { ComponentType } from "react"
 import {
   Search,
-  Filter,
   Plus,
   Settings,
   User,
@@ -17,10 +17,144 @@ import {
   ChevronLeft,
   ChevronRight,
   Target,
+  Coins,
+  TrendingUp,
+  Wallet,
+  LucideProps,
 } from "lucide-react"
 import TaskCard from "@/components/task-card"
 import AddTaskModal from "@/components/add-task-modal"
 import type { Task } from "@/types/task"
+
+// Pool Value Card Component
+const PoolValueCard = ({ 
+  title, 
+  subtitle, 
+  value, 
+  description, 
+  icon: Icon, 
+  gradientFrom, 
+  gradientTo, 
+  valueColor 
+}: {
+  title: string
+  subtitle: string
+  value: string
+  description: string
+  icon: ComponentType<LucideProps>
+  gradientFrom: string
+  gradientTo: string
+  valueColor: string
+}) => (
+  <div className={`bg-gradient-to-br ${gradientFrom} ${gradientTo} border border-opacity-20 rounded-lg p-6`}>
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center space-x-3">
+        <div className={`w-12 h-12 bg-gradient-to-br ${gradientFrom.replace('/10', '')} ${gradientTo.replace('/10', '')} rounded-lg flex items-center justify-center`}>
+          <Icon className="w-6 h-6 text-white" />
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-neutral-100">{title}</h3>
+          <p className="text-sm text-neutral-400">{subtitle}</p>
+        </div>
+      </div>
+    </div>
+    <div className={`text-3xl font-bold ${valueColor} mb-2`}>
+      {value}
+    </div>
+    <p className="text-sm text-neutral-400">
+      {description}
+    </p>
+  </div>
+)
+
+// Progress Card Component
+const ProgressCard = ({
+  title,
+  current,
+  total,
+  onPrevious,
+  onNext,
+  canGoPrevious,
+  canGoNext,
+  progressColor,
+  indicators,
+  onIndicatorClick,
+}: {
+  title: string
+  current: number
+  total: number
+  onPrevious: () => void
+  onNext: () => void
+  canGoPrevious: boolean
+  canGoNext: boolean
+  progressColor: string
+  indicators: number[]
+  onIndicatorClick: (value: number) => void
+}) => (
+  <div className="bg-neutral-800 border border-neutral-700 rounded-lg p-6">
+    <div className="flex items-center justify-between mb-6">
+      <h3 className="text-lg font-semibold text-neutral-100">{title}</h3>
+      <div className="flex items-center space-x-2">
+        <button
+          onClick={onPrevious}
+          disabled={!canGoPrevious}
+          className={`p-2 rounded-md transition-colors ${
+            !canGoPrevious
+              ? "text-neutral-600 cursor-not-allowed"
+              : "text-neutral-400 hover:text-neutral-100 hover:bg-neutral-700"
+          }`}
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <button
+          onClick={onNext}
+          disabled={!canGoNext}
+          className={`p-2 rounded-md transition-colors ${
+            !canGoNext
+              ? "text-neutral-600 cursor-not-allowed"
+              : "text-neutral-400 hover:text-neutral-100 hover:bg-neutral-700"
+          }`}
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+
+    {/* Progress Bar */}
+    <div className="mb-6">
+      <div className="w-full bg-neutral-700 rounded-full h-4">
+        <div
+          className={`${progressColor} h-4 rounded-full transition-all duration-300`}
+          style={{ width: `${(current / total) * 100}%` }}
+        />
+      </div>
+      <div className="flex justify-between text-xs text-neutral-500 mt-2">
+        <span>{title.split(' ')[0]} {current}</span>
+        <span>{(current / total * 100).toFixed(0)}%</span>
+        <span>of {total}</span>
+      </div>
+    </div>
+
+    {/* Indicators */}
+    <div className="flex items-center space-x-2 justify-center flex-wrap">
+      {indicators.map((value) => (
+        <button
+          key={value}
+          onClick={() => onIndicatorClick(value)}
+          className={`w-10 h-10 rounded-full text-xs font-medium transition-colors ${
+            value === current
+              ? `${progressColor.replace('bg-', 'bg-')} text-white`
+              : value < current
+              ? `${progressColor.replace('bg-', 'bg-').replace('-600', '-400')} text-white`
+              : "bg-neutral-700 text-neutral-400 hover:bg-neutral-600"
+          }`}
+        >
+          {value}
+        </button>
+      ))}
+    </div>
+  </div>
+)
 
 // Fake hook for goal data management - TODO: Replace with actual API integration
 const useGoalData = () => {
@@ -96,6 +230,67 @@ const useGoalData = () => {
   }
 }
 
+// Fake hook for stake data management - TODO: Replace with actual API integration
+const useStakeData = () => {
+  const [userStake] = useState(0) // User's current stake in XRP
+  const [totalPool] = useState(15420.75) // Total pool value in XRP
+
+  return {
+    userStake,
+    totalPool,
+  }
+}
+
+// Simple Stake Modal Component - TODO: Implement full functionality
+const StakeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+  const [stakeAmount, setStakeAmount] = useState("")
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-neutral-800 p-6 rounded-lg w-full max-w-md mx-4">
+        <h2 className="text-xl font-semibold text-neutral-100 mb-4">Stake XRP</h2>
+        <p className="text-neutral-400 text-sm mb-6">
+          Stake XRP to commit to your goal. Complete your tasks to earn rewards, or lose your stake if you don&apos;t!
+        </p>
+        
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-neutral-300 mb-2">
+            Amount (XRP)
+          </label>
+          <input
+            type="number"
+            value={stakeAmount}
+            onChange={(e) => setStakeAmount(e.target.value)}
+            placeholder="0.00"
+            className="w-full bg-neutral-700 border border-neutral-600 rounded-md px-3 py-2 text-neutral-100 focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 outline-none"
+          />
+        </div>
+
+        <div className="flex space-x-3">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2 text-sm bg-neutral-700 rounded-md hover:bg-neutral-600 text-neutral-100 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              // TODO: Implement staking logic
+              console.log('Staking:', stakeAmount, 'XRP')
+              onClose()
+            }}
+            className="flex-1 px-4 py-2 text-sm bg-yellow-600 rounded-md hover:bg-yellow-700 text-white font-medium transition-colors"
+          >
+            Stake XRP
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const initialTasks: Task[] = [
   {
     id: "PH-01",
@@ -158,13 +353,24 @@ const initialTasks: Task[] = [
 export default function TaskManager() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isStakeModalOpen, setIsStakeModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [walletId, setWalletId] = useState<string | null>(null)
   const router = useRouter()
   const { goalData, currentMonth, currentWeek, loadGoalData, updateMonth, updateWeek } = useGoalData()
+  const { userStake, totalPool } = useStakeData()
 
   // Load goal data on component mount
   useEffect(() => {
     loadGoalData()
+  }, [])
+
+  // Load wallet ID from localStorage
+  useEffect(() => {
+    const storedWalletId = localStorage.getItem('walletId')
+    if (storedWalletId) {
+      setWalletId(storedWalletId)
+    }
   }, [])
 
   // Redirect to onboarding if no goal data
@@ -232,15 +438,6 @@ export default function TaskManager() {
     }
   }
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'easy': return 'text-green-400'
-      case 'medium': return 'text-yellow-400'
-      case 'hard': return 'text-red-400'
-      default: return 'text-neutral-400'
-    }
-  }
-
   const getDifficultyBadgeColor = (difficulty: string) => {
     switch (difficulty) {
       case 'easy': return 'bg-green-600/20 text-green-400'
@@ -280,9 +477,20 @@ export default function TaskManager() {
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              <button className="px-4 py-2 text-sm bg-neutral-700 rounded-md hover:bg-neutral-600 text-neutral-100 flex items-center space-x-1 transition-colors">
-                <Filter className="w-4 h-4" />
-                <span>Filter</span>
+              {walletId && (
+                <div className="hidden md:flex items-center space-x-2 px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700">
+                  <Wallet className="w-4 h-4 text-purple-400" />
+                  <span className="text-sm text-neutral-300 font-mono">
+                    {walletId.length > 20 ? `${walletId.slice(0, 8)}...${walletId.slice(-8)}` : walletId}
+                  </span>
+                </div>
+              )}
+              <button 
+                onClick={() => setIsStakeModalOpen(true)}
+                className="px-4 py-2 text-sm bg-gradient-to-r from-yellow-600 to-orange-600 rounded-md hover:from-yellow-700 hover:to-orange-700 text-white flex items-center space-x-2 font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                <Coins className="w-4 h-4" />
+                <span>Stake XRP</span>
               </button>
               <button
                 onClick={() => setIsModalOpen(true)}
@@ -318,124 +526,58 @@ export default function TaskManager() {
             </div>
           </div>
           
-                    {/* Progress Navigation */}
+          {/* Progress and Pool Value Section */}
           <div className="space-y-6">
-            {/* Centralized Progress Bars */}
-            <div className="flex items-center justify-center space-x-8">
-              {/* Month Progress */}
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={handlePreviousMonth}
-                  disabled={currentMonth <= 1}
-                  className={`p-2 rounded-md transition-colors ${
-                    currentMonth <= 1
-                      ? "text-neutral-600 cursor-not-allowed"
-                      : "text-neutral-400 hover:text-neutral-100 hover:bg-neutral-700"
-                  }`}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                
-                <div className="w-48">
-                  <div className="w-full bg-neutral-700 rounded-full h-4">
-                    <div
-                      className="bg-purple-600 h-4 rounded-full transition-all duration-300"
-                      style={{ width: `${(currentMonth / goalData.duration) * 100}%` }}
-                    />
-                  </div>
-                  <div className="text-xs text-neutral-500 text-center mt-2">Month Progress</div>
-                </div>
-                
-                <button
-                  onClick={handleNextMonth}
-                  disabled={currentMonth >= goalData.duration}
-                  className={`p-2 rounded-md transition-colors ${
-                    currentMonth >= goalData.duration
-                      ? "text-neutral-600 cursor-not-allowed"
-                      : "text-neutral-400 hover:text-neutral-100 hover:bg-neutral-700"
-                  }`}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Week Progress */}
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={handlePreviousWeek}
-                  disabled={currentWeek <= 1}
-                  className={`p-2 rounded-md transition-colors ${
-                    currentWeek <= 1
-                      ? "text-neutral-600 cursor-not-allowed"
-                      : "text-neutral-400 hover:text-neutral-100 hover:bg-neutral-700"
-                  }`}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                
-                <div className="w-48">
-                  <div className="w-full bg-neutral-700 rounded-full h-4">
-                    <div
-                      className="bg-green-500 h-4 rounded-full transition-all duration-300"
-                      style={{ width: `${(currentWeek / 4) * 100}%` }}
-                    />
-                  </div>
-                  <div className="text-xs text-neutral-500 text-center mt-2">Week Progress</div>
-                </div>
-                
-                <button
-                  onClick={handleNextWeek}
-                  disabled={currentWeek >= 4}
-                  className={`p-2 rounded-md transition-colors ${
-                    currentWeek >= 4
-                      ? "text-neutral-600 cursor-not-allowed"
-                      : "text-neutral-400 hover:text-neutral-100 hover:bg-neutral-700"
-                  }`}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
+            {/* Pool Value Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <PoolValueCard
+                title="Total Pool Value"
+                subtitle="Community stake pool"
+                value={`${totalPool.toLocaleString()} XRP`}
+                description="Complete your goals to earn from the reward pool"
+                icon={TrendingUp}
+                gradientFrom="from-yellow-600/10"
+                gradientTo="to-orange-600/10"
+                valueColor="text-yellow-400"
+              />
+              <PoolValueCard
+                title="Your Stake"
+                subtitle="Current commitment"
+                value={userStake > 0 ? `${userStake.toLocaleString()} XRP` : 'No stake'}
+                description={userStake > 0 ? 'Stay committed to earn rewards!' : 'Stake XRP to commit to your goal'}
+                icon={Wallet}
+                gradientFrom="from-purple-600/10"
+                gradientTo="to-blue-600/10"
+                valueColor="text-purple-400"
+              />
             </div>
 
-            {/* Month Indicators */}
-            <div className="flex items-center space-x-2 justify-center flex-wrap">
-              {Array.from({ length: goalData.duration }, (_, index) => {
-                const month = index + 1
-                return (
-                  <button
-                    key={month}
-                    onClick={() => updateMonth(month)}
-                    className={`w-10 h-10 rounded-full text-xs font-medium transition-colors ${
-                      month === currentMonth
-                        ? "bg-purple-600 text-white"
-                        : month < currentMonth
-                        ? "bg-purple-400 text-white"
-                        : "bg-neutral-700 text-neutral-400 hover:bg-neutral-600"
-                    }`}
-                  >
-                    {month}
-                  </button>
-                )
-              })}
-            </div>
-
-            {/* Week Indicators */}
-            <div className="flex items-center space-x-2 justify-center">
-              {[1, 2, 3, 4].map((week) => (
-                <button
-                  key={week}
-                  onClick={() => updateWeek(week)}
-                  className={`w-10 h-10 rounded-full text-xs font-medium transition-colors ${
-                    week === currentWeek
-                      ? "bg-green-600 text-white"
-                      : week < currentWeek
-                      ? "bg-green-400 text-white"
-                      : "bg-neutral-700 text-neutral-400 hover:bg-neutral-600"
-                  }`}
-                >
-                  {week}
-                </button>
-              ))}
+            {/* Progress Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <ProgressCard
+                title="Month Progress"
+                current={currentMonth}
+                total={goalData.duration}
+                onPrevious={handlePreviousMonth}
+                onNext={handleNextMonth}
+                canGoPrevious={currentMonth > 1}
+                canGoNext={currentMonth < goalData.duration}
+                progressColor="bg-purple-600"
+                indicators={Array.from({ length: goalData.duration }, (_, i) => i + 1)}
+                onIndicatorClick={updateMonth}
+              />
+              <ProgressCard
+                title="Week Progress"
+                current={currentWeek}
+                total={4}
+                onPrevious={handlePreviousWeek}
+                onNext={handleNextWeek}
+                canGoPrevious={currentWeek > 1}
+                canGoNext={currentWeek < 4}
+                progressColor="bg-green-600"
+                indicators={[1, 2, 3, 4]}
+                onIndicatorClick={updateWeek}
+              />
             </div>
           </div>
         </div>
@@ -515,6 +657,9 @@ export default function TaskManager() {
 
       {/* Add Task Modal */}
       <AddTaskModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAddTask={handleAddTask} />
+      
+      {/* Stake Modal */}
+      <StakeModal isOpen={isStakeModalOpen} onClose={() => setIsStakeModalOpen(false)} />
     </div>
   )
 }
