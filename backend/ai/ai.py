@@ -15,7 +15,7 @@ client = genai.Client(api_key=api_key)
 
 router = APIRouter()
 
-@router.post("/create-tasks")
+
 async def create_tasks(goal:str, duration_weeks:int):
     prompt = f"""
         You are an AI assistant that generates structured weekly tasks to help a user achieve a specific goal within a given duration. All tasks must be actionable and require the user to submit evidence of completion. Avoid requirements which can be gamed/faked. It should progressively increase in difficulty or quantity over the weeks.
@@ -143,7 +143,7 @@ async def create_tasks(goal:str, duration_weeks:int):
 
     return response.parsed
 
-@router.post("/submit-task")
+
 async def submit_task(
     task: str = Form(...),
     requirement: str = Form(...),

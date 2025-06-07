@@ -11,14 +11,6 @@ import asyncpg # Added
 # Import routers
 from routers import goals, submissions, tasks
 
-from models import (
-    # User, UserCreate, # Removed User models
-    Goal, GoalCreateRequest, GoalCreate, GoalStatusResponse,
-    Task, TaskCreate,
-    Submission, SubmissionCreateRequest, SubmissionCreate,
-    GoalStatusEnum, TaskVerifiedEnum, SubmissionVerificationResultEnum
-)
-
 load_dotenv()
 
 # SQL Definitions for table creation
@@ -51,7 +43,7 @@ CREATE TABLE IF NOT EXISTS submissions (
     task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
     submitted_data_url TEXT,
     timestamp TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    verification_result VARCHAR(50) CHECK (verification_result IN ('true', 'false'))
+    verification_result TEXT CHECK (verification_result IN ('true', 'false'))
 );
 """
 

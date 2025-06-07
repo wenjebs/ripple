@@ -10,6 +10,7 @@ from models import (
     Submission, SubmissionCreateRequest, SubmissionCreate,
     TaskVerifiedEnum, SubmissionVerificationResultEnum, GoalStatusEnum
 )
+from ai.ai import submit_task as ai_verify_submission_content # Import the AI function
 
 load_dotenv()
 
@@ -28,6 +29,8 @@ router = APIRouter(
     tags=["submissions"],
     responses={404: {"description": "Not found"}},
 )
+
+# Removed the placeholder verify_submission_ai function
 
 @router.post("/submit_task_form/", response_model=Submission) # Path changed, task_id removed from path
 async def submit_task(
@@ -49,57 +52,57 @@ async def submit_task(
 
     task_db_data = task_response.data
     
-    # Use the modality from the form as the current expected modality for this submission
     current_expected_modality = requirement_modality_form
 
     if task_db_data["verified"] == TaskVerifiedEnum.TRUE.value:
         raise HTTPException(status_code=400, detail="Task already verified.")
 
-    content_to_verify: Optional[str | bytes | List[bytes]] = None
-    actual_submission_url_for_db: Optional[str] = "No submission data processed" # Default
+    actual_submission_url_for_db: Optional[str] = "No submission data processed" 
 
     if current_expected_modality == "image":
-        if not submission_images or not any(f for f in submission_images if f is not None): # Check if list is effectively empty
+        if not submission_images or not any(f for f in submission_images if f is not None): 
             raise HTTPException(status_code=400, detail="Image file(s) are required for this task modality.")
         
-        image_bytes_list = []
         image_filenames = []
         for image_file in submission_images:
-            if image_file: # Ensure file is not None
+            if image_file: 
                 if not image_file.content_type or not image_file.content_type.startswith("image/"):
                     raise HTTPException(status_code=400, detail=f"Invalid file type: {image_file.filename}. Please upload images.")
-                img_bytes = await image_file.read()
-                image_bytes_list.append(img_bytes)
                 image_filenames.append(image_file.filename)
         
-        if not image_bytes_list: # If after processing, list is still empty
+        if not image_filenames: 
              raise HTTPException(status_code=400, detail="No valid image files provided.")
-
-        content_to_verify = image_bytes_list
-        # For DB, store placeholder JSON array of filenames. In reality, upload and get URLs.
         actual_submission_url_for_db = json.dumps([f"placeholder_image_path/{fn}" for fn in image_filenames])
 
     elif current_expected_modality == "text":
         if not submission_text:
             raise HTTPException(status_code=400, detail="Text submission is required for this task modality.")
-        content_to_verify = submission_text
-        actual_submission_url_for_db = submission_text # Or a URL if text is uploaded elsewhere
-
+        actual_submission_url_for_db = submission_text
     else:
-        # This case should be prevented by Literal type hint on requirement_modality_form
         raise HTTPException(status_code=400, detail=f"Unsupported task modality: {current_expected_modality}")
 
-    if content_to_verify is None: # Should be caught by above checks
-        raise HTTPException(status_code=400, detail="No submission content provided or processed.")
-
     # 2. Perform AI verification
+    verification_status_enum: SubmissionVerificationResultEnum # Type hint for clarity
     try:
-        verification_status = await verify_submission_ai(
-            task_title_for_ai=task_db_data["title"], # Using DB title for AI context
-            requirement_description_for_ai=requirement_desc_form, # Using form requirement for AI context
-            content_for_ai=content_to_verify,
-            expected_modality_for_ai=current_expected_modality
+        ai_response_dict = await ai_verify_submission_content(
+            task=task_db_data["title"],
+            requirement=requirement_desc_form,
+            requirement_modality=current_expected_modality,
+            submission_text=submission_text,
+            submission_images=submission_images
         )
+        
+        if not isinstance(ai_response_dict, dict) or "is_valid" not in ai_response_dict:
+            print(f"AI verification returned unexpected format: {ai_response_dict}")
+            raise HTTPException(status_code=500, detail="AI verification returned an invalid response format.")
+
+        if ai_response_dict.get("is_valid"):
+            verification_status_enum = SubmissionVerificationResultEnum.TRUE
+        else:
+            verification_status_enum = SubmissionVerificationResultEnum.FALSE
+
+    except HTTPException as e: 
+        raise e
     except Exception as e:
         print(f"AI verification encountered an error: {e}")
         raise HTTPException(status_code=500, detail=f"AI verification failed: {str(e)}")
@@ -108,8 +111,12 @@ async def submit_task(
     submission_to_create = SubmissionCreate(
         task_id=task_id,
         submitted_data_url=actual_submission_url_for_db,
-        verification_result=verification_status
+        verification_result=verification_status_enum.value # Ensure .value is used here
     )
+    
+    # Add this print statement for debugging the exact payload
+    print(f"Payload for submission: {submission_to_create.model_dump(mode='json')}") 
+
     try:
         submission_response = supabase.table("submissions").insert(submission_to_create.model_dump(mode='json')).execute()
         if not submission_response.data:
@@ -123,7 +130,7 @@ async def submit_task(
         raise HTTPException(status_code=500, detail=f"Error creating submission in DB: {str(e)}")
 
     # 4. If submission approved, update task status
-    if verification_status == SubmissionVerificationResultEnum.APPROVED:
+    if verification_status_enum == SubmissionVerificationResultEnum.TRUE: # Corrected enum member
         try:
             update_task_response = supabase.table("tasks").update({"verified": TaskVerifiedEnum.TRUE.value}).eq("id", str(task_id)).execute()
             if not update_task_response.data:
@@ -132,7 +139,7 @@ async def submit_task(
             print(f"Warning: Error updating task {task_id} status: {str(e)}")
 
         # 5. Check if all tasks for the goal are completed
-        goal_id = task_db_data["goals"]["id"] # Access nested goal_id correctly
+        goal_id = task_db_data["goals"]["id"] 
         all_tasks_for_goal_response = supabase.table("tasks").select("id, verified").eq("goal_id", str(goal_id)).execute()
         
         if all_tasks_for_goal_response.data:
@@ -146,5 +153,3 @@ async def submit_task(
                     print(f"Warning: Error updating goal {goal_id} status: {str(e)}")
 
     return Submission(**created_submission_data)
-
-# ... (any other endpoints or helper functions) ...
