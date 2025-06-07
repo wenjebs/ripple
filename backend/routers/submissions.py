@@ -20,14 +20,6 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# AI Service (Placeholder)
-async def verify_submission_ai(submitted_data_url: str, expected_data_type: str) -> SubmissionVerificationResultEnum:
-    # Placeholder: Replace with actual call to OpenAI API or other AI service
-    print(f"AI Verifying submission: {submitted_data_url} (expected: {expected_data_type})")
-    # Simulate AI verification
-    if "fail" in submitted_data_url.lower():
-        return SubmissionVerificationResultEnum.REJECTED
-    return SubmissionVerificationResultEnum.APPROVED
 
 router = APIRouter(
     prefix="/submissions",
