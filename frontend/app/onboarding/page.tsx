@@ -48,7 +48,6 @@ const useGoalStorage = () => {
     goal: string
     duration: number
     difficulty: string
-    xrpAmount: number
   }) => {
     try {
       // Get auth token from localStorage
@@ -66,7 +65,6 @@ const useGoalStorage = () => {
         body: JSON.stringify({
           title: goalData.goal,
           duration_weeks: goalData.duration * 4, // Convert months to weeks
-          xrp_amount: goalData.xrpAmount
         }),
       })
 
@@ -99,8 +97,7 @@ export default function OnboardingPage() {
   const [goalForm, setGoalForm] = useState({
     goal: '',
     duration: 3,
-    difficulty: 'medium',
-    xrpAmount: 100
+    difficulty: 'medium'
   })
   const [isCreatingGoal, setIsCreatingGoal] = useState(false)
   const router = useRouter()
@@ -115,10 +112,6 @@ export default function OnboardingPage() {
       // Validate goal form
       if (!goalForm.goal.trim()) {
         alert('Please enter your goal')
-        return
-      }
-      if (goalForm.xrpAmount <= 0) {
-        alert('Please enter a valid XRP amount')
         return
       }
       
@@ -232,27 +225,6 @@ export default function OnboardingPage() {
                         </option>
                       ))}
                     </select>
-                  </div>
-
-                  {/* XRP Amount Input */}
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-300 mb-2">
-                      XRP Stake Amount
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min="1"
-                        step="1"
-                        value={goalForm.xrpAmount}
-                        onChange={(e) => handleGoalFormChange('xrpAmount', parseInt(e.target.value) || 0)}
-                        className="w-full bg-neutral-700 border border-neutral-600 rounded-md px-3 py-2.5 text-neutral-100 focus:ring-1 focus:ring-purple-600 focus:border-purple-600 outline-none"
-                        placeholder="100"
-                      />
-                    </div>
-                    <p className="text-xs text-neutral-400 mt-1">
-                      This XRP will be staked to your goal. Complete your tasks to earn rewards, or lose your stake if you don&apos;t!
-                    </p>
                   </div>
 
                   {/* Difficulty Level */}
