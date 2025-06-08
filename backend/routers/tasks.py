@@ -30,11 +30,19 @@ router = APIRouter(
 @router.get("/{task_id}", response_model=Task)
 async def get_task(task_id: UUID):
     """Get a specific task by ID"""
-    task_response = supabase.table("tasks").select("*").eq("id", str(task_id)).maybe_single().execute()
-    if not task_response.data:
-        raise HTTPException(status_code=404, detail="Task not found")
-    
-    return Task(**task_response.data)
+    try:
+        task_response = supabase.table("tasks").select("*").eq("id", str(task_id)).maybe_single().execute()
+        if not task_response or not task_response.data:
+            raise HTTPException(status_code=404, detail="Task not found")
+        
+        return Task(**task_response.data)
+    except HTTPException:
+        # Re-raise HTTPExceptions (like 404) as-is
+        raise
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Error fetching task {task_id}: {e}")
+        raise HTTPException(status_code=500, detail="Error retrieving task information")
 
 @router.get("/goal/{goal_id}", response_model=List[Task])
 async def get_tasks_by_goal(goal_id: UUID):

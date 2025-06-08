@@ -46,12 +46,20 @@ async def submit_task(
         raise HTTPException(status_code=400, detail="Invalid Task ID format provided in the 'task' form field.")
 
     # 1. Verify task exists
-    task_response = supabase.table("tasks").select("*, goals(id)").eq("id", str(task_id)).maybe_single().execute()
-    if not task_response.data:
-        raise HTTPException(status_code=404, detail=f"Task with ID {task_id} not found.")
+    try:
+        task_response = supabase.table("tasks").select("*, goals(id)").eq("id", str(task_id)).maybe_single().execute()
+        if not task_response or not task_response.data:
+            raise HTTPException(status_code=404, detail=f"Task with ID {task_id} not found.")
+        
+        task_db_data = task_response.data
+    except HTTPException:
+        # Re-raise HTTPExceptions (like 404) as-is
+        raise
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Error fetching task {task_id}: {e}")
+        raise HTTPException(status_code=500, detail="Error retrieving task information")
 
-    task_db_data = task_response.data
-    
     current_expected_modality = requirement_modality_form
 
     if task_db_data["verified"] == TaskVerifiedEnum.TRUE.value:

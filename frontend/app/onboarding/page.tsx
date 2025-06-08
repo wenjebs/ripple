@@ -48,6 +48,7 @@ const useGoalStorage = () => {
     goal: string
     duration: number
     difficulty: string
+    xrpAmount: number
   }) => {
     try {
       // Get auth token from localStorage
@@ -65,6 +66,7 @@ const useGoalStorage = () => {
         body: JSON.stringify({
           title: goalData.goal,
           duration_weeks: goalData.duration * 4, // Convert months to weeks
+          xrp_amount: goalData.xrpAmount
         }),
       })
 
@@ -97,7 +99,8 @@ export default function OnboardingPage() {
   const [goalForm, setGoalForm] = useState({
     goal: '',
     duration: 3,
-    difficulty: 'medium'
+    difficulty: 'medium',
+    xrpAmount: 100 // Default XRP stake amount
   })
   const [isCreatingGoal, setIsCreatingGoal] = useState(false)
   const router = useRouter()

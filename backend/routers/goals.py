@@ -34,14 +34,27 @@ async def get_goal_status(
     current_user: dict = Depends(get_current_user_dep)
 ):
     # 1. Fetch goal (ensure it belongs to the current user)
-    goal_response = supabase.table("goals").select("*").eq("id", str(goal_id)).eq("user_id", current_user["user_id"]).maybe_single().execute()
-    if not goal_response.data:
-        raise HTTPException(status_code=404, detail="Goal not found")
-    goal_db_data = goal_response.data
+    try:
+        goal_response = supabase.table("goals").select("*").eq("id", str(goal_id)).eq("user_id", current_user["user_id"]).maybe_single().execute()
+        if not goal_response or not goal_response.data:
+            raise HTTPException(status_code=404, detail="Goal not found")
+        goal_db_data = goal_response.data
+    except HTTPException:
+        # Re-raise HTTPExceptions (like 404) as-is
+        raise
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Error fetching goal {goal_id}: {e}")
+        raise HTTPException(status_code=500, detail="Error retrieving goal information")
 
     # 2. Fetch associated tasks
-    tasks_response = supabase.table("tasks").select("*").eq("goal_id", str(goal_id)).order("week_number").execute()
-    tasks_db_data = tasks_response.data if tasks_response.data else []
+    try:
+        tasks_response = supabase.table("tasks").select("*").eq("goal_id", str(goal_id)).order("week_number").execute()
+        tasks_db_data = tasks_response.data if tasks_response and tasks_response.data else []
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Error fetching tasks for goal {goal_id}: {e}")
+        tasks_db_data = []
 
     return GoalStatusResponse(
         **goal_db_data,
@@ -124,16 +137,27 @@ async def create_goal(
 
     # 4. Prepare and return the response
     # Fetch the created goal again to include its ID and default fields
-    final_goal_response = supabase.table("goals").select("*").eq("id", str(goal_id)).single().execute()
-    if not final_goal_response.data:
-        raise HTTPException(status_code=404, detail="Newly created goal not found after task creation.")
+    try:
+        final_goal_response = supabase.table("goals").select("*").eq("id", str(goal_id)).single().execute()
+        if not final_goal_response or not final_goal_response.data:
+            raise HTTPException(status_code=404, detail="Newly created goal not found after task creation.")
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error fetching created goal {goal_id}: {e}")
+        raise HTTPException(status_code=500, detail="Error retrieving created goal information")
 
     # Fetch associated tasks
-    tasks_for_response = supabase.table("tasks").select("*").eq("goal_id", str(goal_id)).execute()
+    try:
+        tasks_for_response = supabase.table("tasks").select("*").eq("goal_id", str(goal_id)).execute()
+        tasks_data = tasks_for_response.data if tasks_for_response and tasks_for_response.data else []
+    except Exception as e:
+        print(f"Error fetching tasks for created goal {goal_id}: {e}")
+        tasks_data = []
 
     return GoalStatusResponse(
         **final_goal_response.data,
-        tasks=[Task(**task) for task in tasks_for_response.data]
+        tasks=[Task(**task) for task in tasks_data]
     )
 
 
