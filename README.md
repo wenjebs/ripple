@@ -14,19 +14,17 @@
 ## 🖼️ Screenshots
 
 ### Main Dashboard
-*[Screenshot of the main productivity dashboard showing staked goals, task lists, and progress tracking]*
+![CleanShot 2025-06-08 at 01 24 10@2x](https://github.com/user-attachments/assets/1456ab94-8cac-40d1-ac0b-de0b54d20520)
 
 ### Wallet Authentication
-*[Screenshot of the Xaman wallet authentication flow with QR code]*
+![CleanShot 2025-06-08 at 01 25 25@2x](https://github.com/user-attachments/assets/e906f8f2-d4fa-40a5-b6a4-d5de2e80a7ed)
 
-### Task Management Interface
-*[Screenshot of the task creation and management interface with AI-generated tasks]*
+### Onboarding Interface
+![CleanShot 2025-06-08 at 01 26 46@2x](https://github.com/user-attachments/assets/2bc527eb-13f0-499f-a8f3-8bebcf5ad762)
+![CleanShot 2025-06-08 at 01 28 07@2x](https://github.com/user-attachments/assets/bc34b94e-f998-4055-a53f-40fd22cfb02d)
 
 ### Photo Submission Modal
-*[Screenshot of the task verification system with photo upload functionality]*
-
-### XRP Staking Interface
-*[Screenshot of the XRP staking modal and pool visualization]*
+![CleanShot 2025-06-08 at 01 29 41@2x](https://github.com/user-attachments/assets/836a5239-3a6a-49b9-a455-7d0e07fcda40)
 
 ## 🔗 XRP Ledger Integration
 

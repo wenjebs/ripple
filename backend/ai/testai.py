@@ -10,13 +10,13 @@ import io
 base_dir = os.path.dirname(os.path.abspath(__file__))
 
 async def run():
-    result = await create_tasks(goal="Get healthy in 1 month", duration_weeks=4)
+    result = await create_tasks(goal="get healthy", duration_weeks=5)
     with open(f"{base_dir}/generated_tasks.json", "w") as f:
         json.dump(result, f, indent=2)
 
     print("Saved result to generated_tasks.json")
 
-# asyncio.run(run())
+asyncio.run(run())
 
 
 async def test_text_submission():
@@ -59,4 +59,4 @@ async def test_image_submission():
     )
     print("Image Submission Result:", result)
 
-asyncio.run(test_image_submission())
+# asyncio.run(test_image_submission())

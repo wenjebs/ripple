@@ -17,25 +17,40 @@ router = APIRouter()
 
 
 async def create_tasks(goal:str, duration_weeks:int):
-    prompt = f"""
-        You are an AI assistant that generates structured weekly tasks to help a user achieve a specific goal within a given duration. All tasks must be actionable and require the user to submit evidence of completion. Avoid requirements which can be gamed/faked. It should progressively increase in difficulty or quantity over the weeks.
+    PROMPT = f"""
+        You are an AI assistant that generates structured weekly tasks to help a user achieve a specific goal within a given duration.
+
+        Each week must include:
+        - Actionable tasks requiring user submission
+        - Tasks that progressively increase in difficulty or quantity over the weeks while still being achievable.
+        - Tasks with verifiable requirements (avoid vague/gamable tasks)
+        - **One fixed test task per week**:
+            - Task: "Calculate 1 + 1 (FOR DEMO PURPOSES)"
+            - Requirement: "Submit the result of 1 + 1"
+            - Requirement modality: "text"
 
         ## Instructions:
         Given:
         - A `goal` (e.g., "Get healthy in 1 month")
         - A `duration_weeks` (e.g., 2)
 
-        Output a valid **JSON object** with the following structure:
+        Output a valid **JSON object** with this structure:
         - `goal`: same goal as input
         - `duration_weeks`: same as input
         - `weeks`: an array of weekly objects
-            - Each week object must include:
+            - Each week must include:
                 - `week`: week number (integer)
                 - `tasks`: list of task objects
                     - Each task must include:
-                        - `task`: a short description
+                        - `task`: short description
                         - `requirement`: what the user must submit
-                        - `requirement_modality`: must be either `"text"` or `"image"`
+                        - `requirement_modality`: either `"text"` or `"image"`
+                    - **Each week's tasks must include the following fixed task**:
+                        {{
+                        "task": "Calculate 1 + 1 (FOR DEMO PURPOSES)",
+                        "requirement": "Submit the result of 1 + 1",
+                        "requirement_modality": "text"
+                        }}
 
         ## Example Input:
         goal: "Get healthy in 1 month"
@@ -58,6 +73,11 @@ async def create_tasks(goal:str, duration_weeks:int):
                 "task": "Eat a healthy meal",
                 "requirement": "screenshot of healthy meal",
                 "requirement_modality": "image"
+                }},
+                {{
+                "task": "Calculate 1 + 1",
+                "requirement": "Submit the result of 1 + 1",
+                "requirement_modality": "text"
                 }}
             ]
             }},
@@ -73,6 +93,11 @@ async def create_tasks(goal:str, duration_weeks:int):
                 "task": "Eat 2 healthy meals",
                 "requirement": "screenshots of 2 healthy meals",
                 "requirement_modality": "image"
+                }},
+                {{
+                "task": "Calculate 1 + 1",
+                "requirement": "Submit the result of 1 + 1",
+                "requirement_modality": "text"
                 }}
             ]
             }}
@@ -84,14 +109,14 @@ async def create_tasks(goal:str, duration_weeks:int):
         - goal: "{goal}"
         - duration_weeks: {duration_weeks}
 
-        Only return valid JSON in the same format. Do not include extra text.
+        Only return valid JSON in the exact format above. Do not include any other text.
     """
 
     model = "gemini-2.5-flash-preview-05-20"
 
     response = client.models.generate_content(
         model=model,
-        contents=[prompt],
+        contents=[PROMPT],
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=genai.types.Schema(
@@ -137,7 +162,8 @@ async def create_tasks(goal:str, duration_weeks:int):
                     ),
                 },
             ),
-        )
+            temperature=0.5,
+        ), 
         
     )
 

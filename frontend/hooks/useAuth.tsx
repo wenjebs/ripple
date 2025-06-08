@@ -64,6 +64,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isXApp, setIsXApp] = useState(false)
   const [isBrowser, setIsBrowser] = useState(false)
 
+  // Track ongoing sync operations to prevent race conditions
+  const [syncInProgress, setSyncInProgress] = useState<Set<string>>(new Set())
+
   const redirectToLogin = () => {
     router.push('/login')
   }
@@ -93,16 +96,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
               setAccount(userAccount)
               await syncUserWithBackend(userAccount)
             }
-                     } catch {
-             console.log('No existing xApp authentication')
-           }
+          } catch {
+            console.log('No existing xApp authentication')
+          }
         }
         
         if (xummSDK.runtime.browser && !xummSDK.runtime.xapp) {
           console.log('Running as browser app')
           
           // Setup browser event listeners
-                     xummSDK.on('error', (error: unknown) => {
+          xummSDK.on('error', (error: unknown) => {
             console.error('Xumm error:', error)
           })
           
@@ -124,16 +127,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             }
           })
           
-          // Check for existing authentication
-          try {
-            const userAccount = await xummSDK.user.account
-            if (userAccount) {
-              setAccount(userAccount)
-              await syncUserWithBackend(userAccount)
-            }
-                     } catch {
-             console.log('No existing browser authentication')
-           }
+          // The 'retrieved' event will handle existing sessions automatically
+          // No need to manually check here to avoid race conditions
         }
       }
       
@@ -145,6 +140,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Sync user data with backend after Xumm authentication
   const syncUserWithBackend = async (walletAddress: string): Promise<boolean> => {
+    // Prevent multiple simultaneous sync operations for the same wallet
+    if (syncInProgress.has(walletAddress)) {
+      console.log(`Sync already in progress for wallet: ${walletAddress}`)
+      return false
+    }
+
+    // Check if user is already authenticated with the same wallet
+    const storedUser = localStorage.getItem('user_data')
+    if (storedUser && user) {
+      try {
+        const parsedUser = JSON.parse(storedUser)
+        if (parsedUser.wallet_address === walletAddress) {
+          console.log(`User already authenticated for wallet: ${walletAddress}`)
+          return true
+        }
+      } catch (error) {
+        console.log('Error parsing stored user data:', error)
+      }
+    }
+
+    console.log(`Starting sync for wallet: ${walletAddress}`)
+    setSyncInProgress(prev => new Set(prev).add(walletAddress))
+
     try {
       // Request challenge from backend
       const challengeResponse = await fetch(`${API_BASE_URL}/auth/challenge`, {
@@ -200,11 +218,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       localStorage.setItem('user_data', JSON.stringify(userData))
 
       setUser(userData)
+      console.log(`Sync completed successfully for wallet: ${walletAddress}`)
       
       return true
     } catch (error) {
-      console.error('Backend sync failed:', error)
+      console.error(`Backend sync failed for wallet ${walletAddress}:`, error)
       return false
+    } finally {
+      // Always remove from sync tracking when done
+      setSyncInProgress(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(walletAddress)
+        return newSet
+      })
+      console.log(`Sync operation finished for wallet: ${walletAddress}`)
     }
   }
 
