@@ -9,7 +9,8 @@
 
 ## 🎥 Demo Video
 
-*[Demo video will be added here - showcasing the complete user flow from wallet connection to task completion and XRP staking]*
+[https://www.loom.com/share/9abf143b2d294cbc9c388f94c4d38961?sid=79134e7d-d95b-4c6e-8b25-f2d31beecbfc
+](https://www.loom.com/share/9abf143b2d294cbc9c388f94c4d38961?sid=f91284b0-3bac-4dbc-a277-c23ec382c101)
 
 ## 🖼️ Screenshots
 
@@ -81,7 +82,7 @@ const stakingTx = {
 
 ## 🎬 Project Explanation Video
 
-*[Video with audio explanation will be added here - A comprehensive Loom-style video covering:]*
+[*[Video with audio explanation will be added here - A comprehensive Loom-style video covering:]*](https://www.loom.com/share/9abf143b2d294cbc9c388f94c4d38961?sid=f91284b0-3bac-4dbc-a277-c23ec382c101)
 - **Project Overview**: How XtraReadyProductivity solves productivity challenges
 - **XRP Ledger Integration**: Detailed explanation of staking, rewards, and penalties
 - **GitHub Repository Structure**: Code organization and architecture
