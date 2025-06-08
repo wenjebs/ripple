@@ -22,7 +22,9 @@ CREATE TABLE IF NOT EXISTS goals (
     duration_weeks INTEGER NOT NULL,
     xrp_amount REAL NOT NULL,
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    end_date DATE GENERATED ALWAYS AS (start_date + (duration_weeks * 7)) STORED,
     status VARCHAR(50) NOT NULL DEFAULT 'incomplete' CHECK (status IN ('incomplete', 'completed')),
+    settled_at TIMESTAMP WITH TIME ZONE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
 );
 """
