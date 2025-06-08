@@ -24,21 +24,39 @@ import { useProgress } from "@/hooks/useProgress"
 import { useTasks } from "@/hooks/useTasks"
 import { toast } from "sonner"
 import { PoolValueCard, ProgressCard } from "@/components/main-page-components"
+import { getPoolStats } from "./api/goals/pool"; // Adjust the import path as needed
 
-// Fake hook for stake data management - TODO: Replace with actual API integration when backend endpoint is available
-const useStakeData = (goalXrpAmount?: number) => {
-  const [totalPool] = useState(15420.75) // Total pool value in XRP - this needs a backend endpoint
 
-  return {
-    userStake: goalXrpAmount || 0, // Use the XRP amount from the goal
-    totalPool,
-  }
+export function useStakeData(walletAddress: string) {
+  const [totalPool, setTotalPool] = useState(0);
+  const [userStake, setUserStake] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>();
+
+  useEffect(() => {
+    const POOL_ADDRESS = process.env.NEXT_PUBLIC_POOL_ADDRESS || ""; 
+    setLoading(true);
+    setTotalPool(925007)
+    console.log("Use Stake: ", walletAddress)
+    getPoolStats(POOL_ADDRESS, walletAddress)
+      .then((data) => {
+        console.log("Use stake data", data)
+        setUserStake(data.userXrp);
+      })
+      .catch((e) => {
+        console.error("useStakeData error", e);
+        setError(e.message);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  return { userStake, totalPool, loading, error };
 }
 
 // Simple Stake Modal Component - QR Code Payment
 const StakeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'checking' | 'confirmed' | 'failed'>('pending')
-  const [stakeAmount, setStakeAmount] = useState("100") // Default stake amount
+  const [stakeAmount, setStakeAmount] = useState("20") // Default stake amount
   const [amountError, setAmountError] = useState("")
 
   if (!isOpen) return null
@@ -210,7 +228,8 @@ export default function TaskManager() {
   // Use SWR hooks for real data fetching
   const { goal, isLoading, isError, hasGoal, mutate: refreshGoal } = useCurrentGoal()
   const progress = useProgress(goal)
-  const { userStake, totalPool } = useStakeData(goal?.xrp_amount)
+  const wallet = process.env.NEXT_PUBLIC_USER_WALLET || ""
+  const { userStake, totalPool} = useStakeData(wallet)
   const { incompleteTasks, completedTasks } = useTasks(goal)
 
   // Load wallet ID from localStorage
