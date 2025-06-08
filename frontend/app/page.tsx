@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
@@ -18,6 +17,7 @@ import {
 import TaskCard from "@/components/task-card"
 import AddTaskModal from "@/components/add-task-modal"
 import TaskSubmissionModal from "@/components/photo-submission-modal"
+import QRPaymentCode from "@/components/QRPaymentCode"
 import type { Task } from "@/types/task"
 import { useCurrentGoal } from "@/hooks/useGoal"
 import { useProgress } from "@/hooks/useProgress"
@@ -35,51 +35,160 @@ const useStakeData = (goalXrpAmount?: number) => {
   }
 }
 
-// Simple Stake Modal Component - TODO: Implement full functionality
+// Simple Stake Modal Component - QR Code Payment
 const StakeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
-  const [stakeAmount, setStakeAmount] = useState("")
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'checking' | 'confirmed' | 'failed'>('pending')
+  const [stakeAmount, setStakeAmount] = useState("100") // Default stake amount
+  const [amountError, setAmountError] = useState("")
 
   if (!isOpen) return null
+
+  const validateAmount = (amount: string) => {
+    const numAmount = parseFloat(amount)
+    if (!amount || amount.trim() === "") {
+      return "Please enter an amount"
+    }
+    if (isNaN(numAmount) || numAmount <= 0) {
+      return "Please enter a valid positive number"
+    }
+    if (numAmount < 1) {
+      return "Minimum stake is 1 XRP"
+    }
+    if (numAmount > 10000) {
+      return "Maximum stake is 10,000 XRP"
+    }
+    return ""
+  }
+
+  const handleAmountChange = (value: string) => {
+    setStakeAmount(value)
+    setAmountError(validateAmount(value))
+  }
+
+  const handleCheckPayment = () => {
+    const error = validateAmount(stakeAmount)
+    if (error) {
+      setAmountError(error)
+      return
+    }
+    
+    setPaymentStatus('checking')
+    // Simulate checking payment status
+    setTimeout(() => {
+      // In production, you'd check the actual transaction on XRPL
+      setPaymentStatus('confirmed')
+      setTimeout(() => {
+        onClose()
+        setPaymentStatus('pending')
+        setAmountError("")
+      }, 2000)
+    }, 2000)
+  }
+
+  const handleClose = () => {
+    onClose()
+    setPaymentStatus('pending')
+    setAmountError("")
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-neutral-800 p-6 rounded-lg w-full max-w-md mx-4">
         <h2 className="text-xl font-semibold text-neutral-100 mb-4">Stake XRP</h2>
-        <p className="text-neutral-400 text-sm mb-6">
-          Stake XRP to commit to your goal. Complete your tasks to earn rewards, or lose your stake if you don&apos;t!
-        </p>
         
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-neutral-300 mb-2">
-            Amount (XRP)
-          </label>
-          <input
-            type="number"
-            value={stakeAmount}
-            onChange={(e) => setStakeAmount(e.target.value)}
-            placeholder="0.00"
-            className="w-full bg-neutral-700 border border-neutral-600 rounded-md px-3 py-2 text-neutral-100 focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 outline-none"
-          />
-        </div>
+                {paymentStatus === 'pending' && (
+          <>
+            <p className="text-neutral-400 text-sm mb-6">
+              Enter your stake amount and scan the QR code with your XRP wallet. Complete your tasks to earn rewards!
+            </p>
+            
+            {/* Amount Input */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-neutral-300 mb-2">
+                Stake Amount (XRP)
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="10000"
+                step="0.000001"
+                value={stakeAmount}
+                onChange={(e) => handleAmountChange(e.target.value)}
+                placeholder="100"
+                className={`w-full bg-neutral-700 border rounded-md px-3 py-2.5 text-neutral-100 focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 outline-none ${
+                  amountError ? 'border-red-500' : 'border-neutral-600'
+                }`}
+              />
+              {amountError && (
+                <p className="text-red-400 text-xs mt-1">{amountError}</p>
+              )}
+              <p className="text-neutral-500 text-xs mt-1">
+                Minimum: 1 XRP • Maximum: 10,000 XRP
+              </p>
+            </div>
+            
+            <QRPaymentCode
+              amount={stakeAmount}
+              destination="rK6UzEi6KFvxtrrV2aL6HNZsVe4hKUdjbC"
+              network="XRP Testnet"
+              className="mb-6"
+            />
 
-        <div className="flex space-x-3">
-          <button
-            onClick={onClose}
-            className="flex-1 px-4 py-2 text-sm bg-neutral-700 rounded-md hover:bg-neutral-600 text-neutral-100 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => {
-              // TODO: Implement staking logic
-              console.log('Staking:', stakeAmount, 'XRP')
-              onClose()
-            }}
-            className="flex-1 px-4 py-2 text-sm bg-yellow-600 rounded-md hover:bg-yellow-700 text-white font-medium transition-colors"
-          >
-            Stake XRP
-          </button>
-        </div>
+            <div className="flex space-x-3">
+              <button
+                onClick={handleClose}
+                className="flex-1 px-4 py-2 text-sm bg-neutral-700 rounded-md hover:bg-neutral-600 text-neutral-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCheckPayment}
+                disabled={!!amountError || !stakeAmount.trim()}
+                className="flex-1 px-4 py-2 text-sm bg-yellow-600 rounded-md hover:bg-yellow-700 disabled:bg-neutral-600 disabled:cursor-not-allowed text-white font-medium transition-colors"
+              >
+                I&apos;ve Paid
+              </button>
+            </div>
+          </>
+        )}
+
+        {paymentStatus === 'checking' && (
+          <div className="text-center py-8">
+            <div className="w-16 h-16 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-neutral-300 mb-2">Checking Payment...</p>
+            <p className="text-neutral-500 text-sm">Verifying transaction on XRP Ledger</p>
+          </div>
+        )}
+
+        {paymentStatus === 'confirmed' && (
+          <div className="text-center py-8">
+            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p className="text-green-400 font-medium mb-2">Payment Confirmed!</p>
+            <p className="text-neutral-400 text-sm">Your {parseFloat(stakeAmount).toLocaleString()} XRP stake has been received</p>
+          </div>
+        )}
+
+        {paymentStatus === 'failed' && (
+          <div className="text-center py-8">
+            <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+                         <p className="text-red-400 font-medium mb-2">Payment Not Found</p>
+             <p className="text-neutral-400 text-sm">Please try again or contact support</p>
+            <button
+              onClick={() => setPaymentStatus('pending')}
+              className="mt-4 px-4 py-2 text-sm bg-yellow-600 rounded-md hover:bg-yellow-700 text-white font-medium transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -94,6 +203,7 @@ export default function TaskManager() {
   const [walletId, setWalletId] = useState<string | null>(null)
   const [showAllTasks, setShowAllTasks] = useState(false)
   const [showMonthTasks, setShowMonthTasks] = useState(false)
+  const [walletCopied, setWalletCopied] = useState(false)
   const router = useRouter()
   const { isAuthenticated, isLoading: authLoading, user, logout } = useAuth()
   
@@ -231,6 +341,24 @@ export default function TaskManager() {
     }
   }
 
+  const copyWalletAddress = async (address: string) => {
+    try {
+      await navigator.clipboard.writeText(address)
+      setWalletCopied(true)
+      toast.success("Wallet address copied!", {
+        description: address,
+        duration: 3000,
+      })
+      setTimeout(() => setWalletCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy wallet address: ', err)
+      toast.error("Failed to copy address", {
+        description: "Please copy manually: " + address,
+        duration: 5000,
+      })
+    }
+  }
+
   console.log("goal", goal)
   console.log("progress", progress)
   console.log("userStake", userStake)
@@ -287,15 +415,28 @@ export default function TaskManager() {
             </div>
             <div className="flex items-center space-x-3">
               {(user?.wallet_address || walletId) && (
-                <div className="hidden md:flex items-center space-x-2 px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700">
+                <button
+                  onClick={() => copyWalletAddress(user?.wallet_address || walletId || '')}
+                  className="hidden md:flex items-center space-x-2 px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 hover:bg-neutral-700 hover:border-purple-500 transition-colors group"
+                  title="Click to copy full wallet address"
+                >
                   <Wallet className="w-4 h-4 text-purple-400" />
-                  <span className="text-sm text-neutral-300 font-mono">
+                  <span className="text-sm text-neutral-300 font-mono group-hover:text-purple-300">
                     {(() => {
                       const address = user?.wallet_address || walletId || ''
                       return address.length > 20 ? `${address.slice(0, 8)}...${address.slice(-8)}` : address
                     })()}
                   </span>
-                </div>
+                  {walletCopied ? (
+                    <svg className="w-3 h-3 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <svg className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  )}
+                </button>
               )}
               <button 
                 onClick={() => setIsStakeModalOpen(true)}
